@@ -259,7 +259,7 @@ Contains
          Deallocate (TEMP1)
     !
          Return
-100      Format (1 X, A26, I6, " =>", 2 X, 4(I5, 1 H,))
+100      Format (1 X, A26, I6, " =>", 2 X, 4(I5, ","))
       End Subroutine BCMAP
   !==============================================================================|
   !
