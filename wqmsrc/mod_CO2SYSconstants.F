@@ -94,6 +94,8 @@ Module MOD_CO2SYS
       Character (Len=4) :: UNITCO2ATM
 !
 	  Real (SP), Dimension (2) :: JDstart1 !AN
+
+         Integer :: WHICH_K1K2, WHOSEKSO4
 Contains
   !subroutine CO2SYSCONSTANTS
   !subroutine CO2SYSCONST_ALLOC
@@ -211,6 +213,23 @@ Contains
 !
 !
       End Subroutine CO2SYSCONST_ALLOC
+
+      Subroutine CO2SYSCONST_READ
+         USE MOD_FILEINFO, ONLY: INK1K2
+         ! Read WHICH_K1K2 and WHOSEKSO4 from input file K1_K2_KSO4.dat
+         Open (Unit=INK1K2, File='inputs/input_K1_K2_KSO4.dat', &
+            Status='old')
+
+         Read (INK1K2, 1099) WHICH_K1K2, WHOSEKSO4
+1099     Format (/ (2 I2))
+
+         Close (INK1K2)
+         !if(MSR)write(*,*)'WHICH_K1K2, WHOSEKSO4='
+         !if(MSR)write(*,*)WHICH_K1K2, WHOSEKSO4
+!
+!
+!
+      End Subroutine
 !
 !
   !************************************************************************
@@ -331,27 +350,8 @@ Contains
     !     REAL(SP) :: RGasConstant = 83.14472 ! ml bar-1 K-1 mol-1, DOEv3 !(Dickson et al., 2007). !Commented in CO2SYS.m v1.1
          Real (SP) :: P1atm = 1.01325_SP ! in bar
 !
-         ! even though save is set above, reset it here, since these really need saved and someone might remove above save because save is "bad"
-         Logical,save :: NEEDREAD = .TRUE.
-         Integer,save :: WHICH_K1K2, WHOSEKSO4
          Integer :: I, K
 !
-!
-    ! Read WHICH_K1K2 and WHOSEKSO4 from input file K1_K2_KSO4.dat
-         IF (NEEDREAD) THEN
-         Open (Unit=INK1K2, File='inputs/input_K1_K2_KSO4.dat', Status='ol&
-        &d')
-!
-         Read (INK1K2, 1099) WHICH_K1K2, WHOSEKSO4
-!
-         Close (INK1K2)
-         NEEDREAD = .FALSE.
-         ENDIF ! NEEDREAD
-!
-1099     Format (/ (2 I2))
-!
-    !if(MSR)write(*,*)'WHICH_K1K2, WHOSEKSO4='
-    !if(MSR)write(*,*)WHICH_K1K2, WHOSEKSO4
 !
     ! Calculate constants inside a double DO loop
          Do K = 1, KBM1

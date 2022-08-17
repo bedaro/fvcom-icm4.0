@@ -126,6 +126,13 @@
 #         DEBFLGS  =
 #         OPT      = -O3
 #         CLIB     =
+
+#--------------------------------------------------------------------------
+#  pFUnit configuration
+#--------------------------------------------------------------------------
+# Set this to the location where pFUnit is installed
+export PFUNIT_DIR = /opt/pFUnit/4.3.0-openmpi/PFUNIT-4.3
+
 # Include custom compiler and other configuration in local.mk, which is
 # ignored by git
 ifneq ("$(wildcard local.mk))","")
@@ -135,15 +142,18 @@ endif
 #  END USER DEFINITION SECTION
 #==========================================================================
 
+include $(PFUNIT_DIR)/include/PFUNIT.mk
+
          FFLAGS = $(DEBFLGS) $(OPT)
          MDEPFLAGS = --cpp --fext=f90 --file=-
          RANLIB = ranlib
+export FC FFLAGS
 
 #--------------------------------------------------------------------------
 #  CAT Preprocessing Flags
 #--------------------------------------------------------------------------
 
-           CPPARGS = $(CPPFLAGS) $(DEF_FLAGS) $(FLAG_0) $(FLAG_1) $(FLAG_2) $(FLAG_3) 		\
+           CPPARGS = $(CPPFLAGS) $(FLAG_0) $(FLAG_1) $(FLAG_2) $(FLAG_3) 		\
                      $(FLAG_4) $(FLAG_5) $(FLAG_6) $(FLAG_7) $(FLAG_8) $(FLAG_9) $(FLAG_10) $(FLAG_11)
 
 #--------------------------------------------------------------------------
@@ -155,6 +165,7 @@ endif
 #             LIBS  = $(PARLIB) $(PETSC_LIB)
 #           INCS  = $(IOINCS)$(PETSC_FC_INCLUDES)$(IOINCS)
            INCS  = $(IOINCS)
+export INCS LIBS
 
 #--------------------------------------------------------------------------
 #  Preprocessing and Compilation Directives
@@ -190,6 +201,8 @@ MAIN  = mod_prec.F	mod_types.F	mod_utils.F	mod_input.F	mod_control.F	\
 
  OBJS = $(SRCS:.F=.o)
 
+all: $(EXEC) test
+
 #--------------------------------------------------------------------------
 #  Linking Directives
 #--------------------------------------------------------------------------
@@ -206,6 +219,20 @@ depend makedepends:
 
 
 #--------------------------------------------------------------------------
+#  Unit tests (pFUnit)
+#--------------------------------------------------------------------------
+
+# Create the software under test (SUT) archive
+libsut.a: $(OBJS)
+	$(AR) -r $@ $?
+
+test: libsut.a
+	$(MAKE) -C tests all
+
+bench: $(EXEC)
+	$(MAKE) -C benchmarks all
+
+#--------------------------------------------------------------------------
 #  Tar Up Code
 #--------------------------------------------------------------------------
 
@@ -218,6 +245,8 @@ tarfile:
 
 clean:
 		/bin/rm -f *.o *.mod *.f90
+		PFUNIT_DIR=$(PFUNIT_DIR) make -C tests clean
+		make -C benchmarks clean
 
 clobber:	clean
 		/bin/rm -f *.f90 *.o $(EXEC)

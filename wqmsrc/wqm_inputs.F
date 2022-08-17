@@ -72,7 +72,7 @@ Subroutine INPUTS ()
   !Took MOD_CONTROL out of MOD_HYDROVARS and put the used variables here
       Use MOD_CONTROL, Only: SERIAL, MSR, PAR, DTI
 !
-      Use MOD_CO2SYS, Only: CO2SYSCONST_ALLOC
+      Use MOD_CO2SYS, Only: CO2SYSCONST_ALLOC, CO2SYSCONST_READ
       Use MOD_PH_PCO2, Only: CALC_PH_PCO2
 !
 # if defined (KILLTREES)
@@ -392,6 +392,7 @@ Subroutine INPUTS ()
 !
   !: allocate all CO2SYS parameters
       Call CO2SYSCONST_ALLOC
+      Call CO2SYSCONST_READ
 !
   !
   !--MAP OPEN BOUNDARY CONDITION NODES TO LOCAL DOMAIN

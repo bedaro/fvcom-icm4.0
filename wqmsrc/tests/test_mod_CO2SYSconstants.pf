@@ -1,0 +1,231 @@
+module test_mod_CO2SYSconstants
+  use mod_prec, only: SP
+  use funit
+  use mod_CO2SYS, only: co2sysconst_alloc, co2sysconstants, &
+    co2sysconst_dealloc, which_K1K2, whoseKSO4, TB, TF, TS, &
+    IonS, K0, KS, KF, KBb, KW, K1, K2, FugFac, VPFac
+  use mod_sizes, only: mgl, ngl
+  use mod_lims, only: kb, kbm1
+  implicit none
+
+contains
+  @before
+  subroutine set_up()
+    use mod_lims, only: mtloc, mloc, nloc, ntloc
+    use mod_control, only: msr
+    use mod_hydrovars, only: zz, d, zz2d, hydro_geom_alloc, hydro_alloc
+    use mod_wqm, only: wqm_alloc, t, salt, talk, po4
+
+    integer :: i, j
+
+    ! Initialize for 3x3 arrays of state variables. 3 nodes, single element
+    ! Depths 10, 12, 13
+    ! Sigma layers 0, 0.3, 1
+    msr = .True.
+    kb = 3
+    kbm1 = 2
+    mgl = 3
+    mloc = 3
+    mtloc = 3
+    ngl = 1
+    nloc = 1
+    ntloc = 1
+
+    call hydro_geom_alloc()
+    call hydro_alloc()
+    call wqm_alloc()
+
+    call co2sysconst_alloc()
+
+    ! Construct a test grid with some depths and sigma layers
+    d(1) = 10
+    d(2) = 50
+    d(3) = 30
+    zz(1) = 0.15
+    zz(2) = 0.65
+    zz(3) = 1
+    do i = 1, mgl
+      do j = 1, kb
+        zz2d(i, j) = zz(j)
+      end do
+    end do
+  end subroutine
+
+  ! Output the final state of all the variables CO2SYSCONSTANTS could modify.
+  ! This format matches that of the test result files read by check_result().
+  subroutine debug()
+    use mod_wqm, only: wqm_alloc, t, salt, talk, po4 
+    integer :: i, j
+    print 10, "TB", ((tb(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "TF", ((tf(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "TS", ((ts(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "IonS", ((IonS(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "K0", ((k0(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "KS", ((ks(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "KF", ((kf(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "Kbb", ((kbb(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "KW", ((kw(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "K1", ((k1(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "K2", ((k2(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "FugFac", ((FugFac(i,j), i=1, mgl), j=1, kbm1)
+    print 10, "VPFac", ((VPFac(i,j), i=1, mgl), j=1, kbm1)
+10  format(a8, 6(e12.5))
+  end subroutine
+
+  ! Load test data from the given filename
+  subroutine load_condition(fname)
+    use mod_wqm, only: t, salt, talk, po4
+    character(len=8) :: lbl
+    character(len=*) :: fname
+    open(901, file=fname)
+    read(901, *) lbl, t
+    read(901, *) lbl, salt
+    read(901, *) lbl, talk
+    read(901, *) lbl, po4
+    close(901)
+  end subroutine
+
+  ! Utility function that checks for relative equality of two 2D arrays
+  subroutine check_equal(a, b, msg)
+    real(SP), dimension(:, :), intent(in) :: a, b
+    character(len=*) msg
+    integer :: i, j
+    @assertEqual(size(a, 1), size(b, 1), message=msg // " array dim 1 mismatch")
+    @assertEqual(size(a, 2), size(b, 2), message=msg // " array dim 2 mismatch")
+    do i = 1, size(a, 1)
+      do j = 1, size(a, 2)
+        ! assertRealivelyEqual can't handle zeros so check for them and use
+        ! a special assert if found
+        if(a(i, j) == 0 .or. b(i, j) == 0) then
+          @assertEqual(a(i, j), b(i, j), tolerance=1e-5, message=msg)
+        else
+          @assertRelativelyEqual(a(i, j), b(i, j), message=msg, tolerance=1e-3)
+        end if
+      end do
+    end do
+  end subroutine
+
+  ! Runs through all variables in a given filename and checks that they are
+  ! equal. Fortran does not allow enumerating the variable names directly
+  ! so they are hard-coded.
+  subroutine check_result(fname)
+    use mod_wqm, only: talk
+    integer, parameter :: var_ct = 13
+    integer :: v
+    character(len=8) :: lbl
+    character(len=16) :: dbg
+    character(len=*) :: fname
+    real(SP), dimension(0:mgl, kbm1) :: expect
+
+    open(902, file=fname)
+    do v = 1, var_ct
+      read(902, *) lbl, expect(1:,:)
+      write(dbg, '(a,i0,a,i0)') lbl // '_', which_K1K2, '_', whoseKSO4
+      select case (lbl)
+        case('TB')
+          call check_equal(expect, TB, dbg)
+        case('TF')
+          call check_equal(expect, TF, dbg)
+        case('TS')
+          call check_equal(expect, TS, dbg)
+        case('IonS')
+          call check_equal(expect, IonS, dbg)
+        case('K0')
+          call check_equal(expect, K0, dbg)
+        case('KS')
+          call check_equal(expect, KS, dbg)
+        case('KF')
+          call check_equal(expect, KF, dbg)
+        case('Kbb')
+          call check_equal(expect, Kbb, dbg)
+        case('KW')
+          call check_equal(expect, KW, dbg)
+        case('K1')
+          call check_equal(expect, K1, dbg)
+        case('K2')
+          call check_equal(expect, K2, dbg)
+        case('FugFac')
+          call check_equal(expect, FugFac, dbg)
+        case('VPFac')
+          call check_equal(expect, VPFac, dbg)
+        case('TALK')
+          call check_equal(expect, TALK, dbg)
+      end select
+    end do
+    close(902)
+  end subroutine
+
+  @test
+  subroutine test_m_n()
+    integer :: m, n
+    character(50) :: filename
+    do m = 1, 14
+      do n = 1, 4
+        which_K1K2 = m
+        whoseKSO4 = n
+        call load_condition('data/test_condition_1.txt')
+
+        call co2sysconstants()
+
+        write(filename, '(a,i0,a,i0,a)') 'data/test_mod_CO2SYSconstants_', &
+          m, '_', n, '.txt'
+
+        call check_result(filename)
+      end do
+    end do
+  end subroutine
+
+  !@test
+  subroutine test_generate_data()
+    integer :: i, j
+    do i = 1, 14
+      do j = 1, 4
+        call dump_m_n(i, j)
+      end do
+    end do
+  end subroutine
+
+  ! Used to generate the final states of a given configuration. Use
+  ! on trusted code to build test cases.
+  subroutine dump_m_n(m, n)
+    use mod_wqm, only: talk
+    integer :: m, n, i, j
+    character(50) :: filename
+    which_K1K2 = m
+    whoseKSO4 = n
+
+    write(filename, '(a,i0,a,i0,a)') 'data/test_mod_CO2SYSconstants_', &
+      m, '_', n, '.txt'
+
+    call load_condition('data/test_condition_1.txt')
+    call co2sysconstants()
+    open(903, file=filename)
+    write(903,11) "TB", ((tb(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "TF", ((tf(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "TS", ((ts(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "IonS", ((IonS(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "K0", ((k0(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "KS", ((ks(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "KF", ((kf(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "Kbb", ((kbb(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "KW", ((kw(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "K1", ((k1(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "K2", ((k2(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "FugFac", ((FugFac(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "VPFac", ((VPFac(i,j), i=1, mgl), j=1, kbm1)
+    write(903,11) "TALK", ((TALK(i,j), i=1, mgl), j=1, kbm1)
+    close(903)
+11  format(a8, 6(e12.5))
+  end subroutine
+
+  @after
+  subroutine tear_down()
+    use mod_hydrovars, only: hydro_geom_dealloc, hydro_dealloc
+    use mod_wqm, only: wqm_dealloc
+    call co2sysconst_dealloc()
+    call hydro_dealloc()
+    call wqm_dealloc()
+    call hydro_geom_dealloc()
+  end subroutine
+
+end module

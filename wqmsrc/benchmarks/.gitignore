@@ -1,0 +1,5 @@
+# Don't ignore the source code
+!*.f90
+
+# Executable
+co2sys_bench
