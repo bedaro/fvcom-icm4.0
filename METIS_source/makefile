@@ -5,6 +5,12 @@ RANLIB = ranlib
 CC = icc 
 # add c compiler optimization flags
 OPTFLAGS = -O2
+# Include custom compiler and other configuration in local.mk, which is
+# ignored by git
+ifneq ("$(wildcard local.mk))","")
+        include local.mk
+endif
+
 CFLAGS = $(COPTIONS) $(OPTFLAGS) $(INCLUDES)
 LD = $(CC) -L. 
 

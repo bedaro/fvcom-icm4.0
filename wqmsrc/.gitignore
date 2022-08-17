@@ -1,0 +1,6 @@
+# Preprocessed Fortran code
+./*.f90
+
+# The executables
+FVCOM_ICM_v4_pH_TAinitialFromS
+FVCOM_ICM_v4_pH_TAinitialFromInput

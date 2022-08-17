@@ -126,6 +126,11 @@
 #         DEBFLGS  =
 #         OPT      =
 #         CLIB     =
+# Include custom compiler and other configuration in local.mk, which is
+# ignored by git
+ifneq ("$(wildcard local.mk))","")
+        include local.mk
+endif
 #==========================================================================
 #  END USER DEFINITION SECTION
 #==========================================================================
