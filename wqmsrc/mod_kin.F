@@ -38,7 +38,7 @@
 !**                                                                    **
 !************************************************************************
 Module MOD_KIN
-      Use MOD_PREC, Only: SP
+      Use MOD_PREC, Only: SP, SMOD
       Use MOD_ZOOP, Only: CTSZ, CTLZ, KHCSZ, KHCLZ, MZEROSZ, MZEROLZ, &
      & UB1SZ, UB2SZ, UB3SZ, UB1LZ, UB2LZ, UB3LZ, ULDSZ, URDSZ, ULPSZ, &
      & URPSZ, ULLZ, URLZ, USZLZ, DOCRITSZ, DOCRITLZ, ANCSZ, ANCLZ, &
@@ -258,7 +258,7 @@ Contains
          DTSZ = 0.0
          DTLZ = 0.0
     !
-         J = AINT(1.0 + AMOD (JDAY, 365.25))
+         J = AINT(1.0 + SMOD (JDAY, 365.25_SP))
     !
          Do K = 1, KBM1
             Do I = 1, MLOC

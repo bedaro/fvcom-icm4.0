@@ -122,9 +122,9 @@
 #--------------------------------------------------------------------------
 #         CPP      = /usr/bin/cpp
 #         CPPFLAGS = $(DEF_FLAGS)  -DGFORTRAN
-#         FC       = gfortran  -O3
+#         FC       = gfortran -fallow-argument-mismatch -ffree-line-length-160
 #         DEBFLGS  =
-#         OPT      =
+#         OPT      = -O3
 #         CLIB     =
 # Include custom compiler and other configuration in local.mk, which is
 # ignored by git

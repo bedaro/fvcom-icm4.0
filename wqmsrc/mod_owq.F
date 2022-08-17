@@ -56,7 +56,7 @@ Module MOD_OWQ
       Use MOD_PAR, Only: NHN, NGID, HN_LST
 # endif
   !
-      Use MOD_PREC, Only: SP
+      Use MOD_PREC, Only: SP, SMOD
   !
       Use MOD_ZOOP, Only: SZ, LZ
   !
@@ -297,7 +297,7 @@ Contains
     !
     ! CONVERT MODEL JULIAN DAY TO DAY AND HOUR
     !
-         DOY = AMOD (JDAY, 365.)
+         DOY = SMOD (JDAY, 365._SP)
          HOUR = 24. * (DOY-AINT(DOY))
          DOY = AINT (DOY) + DOFFSET
     !

@@ -82,5 +82,15 @@ Module MOD_PREC
       Integer, Parameter :: MPI_CDF = MPI_REAL
 #  endif
   !
+Contains
+      ! Wrapper for the right MOD function based on precision level
+      Function SMOD(A, P)
+         REAL(SP) :: SMOD, A, P
+#ifdef DOUBLE_PRECISION
+         SMOD = DMOD(A, P)
+#else
+         SMOD = AMOD(A, P)
+#endif
+      End Function
 End Module MOD_PREC
 !

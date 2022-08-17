@@ -63,7 +63,7 @@
 !
 Module MOD_ALGAL
   !
-      Use MOD_PREC, Only: SP
+      Use MOD_PREC, Only: SP, SMOD
       Use MOD_SIZES, Only: MGL
       Use MOD_LIMS, Only: KBM1, MTLOC, MLOC
   !
@@ -618,7 +618,7 @@ Contains
     !
     ! DETERMINE JULIAN DAY
     !
-         J = AINT(1.0 + AMOD (JDAY, 365.25))
+         J = AINT(1.0 + SMOD (JDAY, 365.25_SP))
 
 !!! SALINITY TOXICITY
     ! TEMPERATURE EFFECTS ON PRODUCTION AND RESPIRATION

@@ -48,7 +48,7 @@ Module MOD_SAV
   !**                                                                    **
   !************************************************************************
   !
-      Use MOD_PREC, Only: SP
+      Use MOD_PREC, Only: SP, SMOD
   !
 	  Use MOD_SIZES, Only: NSAVM ! AN
   !
@@ -1502,7 +1502,7 @@ Contains
     ! CONVERT MODEL TIME STEP TO DAYS, DETERMINE JULIAN DAY
     !
          DLTDY = DLT / 86400.
-         J = AINT(1.0 + AMOD (JDAY, 365.25))
+         J = AINT(1.0 + SMOD (JDAY, 365.25_SP))
     !
     ! COMPUTE DEGREE DAYS FOR EACH CELL, DISCRETE ARRAY ELEMENT FOR
     ! TRANSFERS ETC
