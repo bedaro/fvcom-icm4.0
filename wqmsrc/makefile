@@ -195,7 +195,8 @@ MAIN  = mod_prec.F	mod_types.F	mod_utils.F	mod_input.F	mod_control.F	\
 	domdec.F	genmap.F	bcs_force.F	wqm_inputs.F	\
 	mod_kin.F	mod_hydro.F		tvds.F			\
 	adv_wqm.F	vdif_wqm.F	vertvl.F	viscofh.F	\
-	bcond_wqm.F	fct_nut.F	mod_filenames.F	wqm_main.F
+	bcond_wqm.F	fct_nut.F	mod_filenames.F	wqm_main.F	\
+	mod_clock.F
 
  SRCS = $(MAIN)
 
@@ -215,7 +216,7 @@ $(EXEC):	$(OBJS)
 #--------------------------------------------------------------------------
 
 depend makedepends:
-		/pic/projects/psgb_model/makedepf90_working/bin/makedepf90   $(SRCS) > makedepends
+	../makedepf90   $(SRCS) > makedepends
 
 
 #--------------------------------------------------------------------------

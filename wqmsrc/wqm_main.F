@@ -124,6 +124,7 @@ Program FVCOMICM
 	 & TUBER_GL, EP_GL ! added ADV,VDIF FLUXES 26jan2016
 	 ! Adi-2/13/18 added TSS_GL, SSI_GL, TURB_GL, KESS_GL
   !
+      use mod_clock, only: start_clock, report_time
       Use MOD_OWQ, Only: INTKE, NXKEI, IAVG, KESS, OWQ_DEALLOC, &
      & LGHT_ATTN, TSS, TURB, PARAD !Adi-2/13/18, Added TSS, TURB
 
@@ -360,6 +361,7 @@ Program FVCOMICM
       PRINT_STN = .False.
       OPEN_HIS = .False.
       OPEN_STN = .False.
+      call start_clock
   !
   !counting numbe of steps past t_his_start and t_stn_start
   !restart file there
@@ -419,8 +421,8 @@ Program FVCOMICM
          IINT = IINT + 1
          THOUR = ELTMS / 3600.0
      !
-         If (MSR) WRITE (*,*) 'SIMULATION TIME: ', THOUR, ' HOURS', &
-        & JDAY, 'JDAYS'
+         if(MSR) call report_time(iint, int(tmstrt*86400), &
+               int(tmend*86400), jday * 86400)
 !
      !
      ! time-varying forcing data
