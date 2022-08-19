@@ -1578,7 +1578,7 @@ Contains
          Read (BFI, 999, Err=10100) HSEDALL, SSTATEG3, SSTATEIC, &
         & SSTATEAVG, NDTSED, QUASISS ! depth of sediments, steady state flag for G3, number of WCtimesteps per sedim timestep (DTsed=NDTSED*DTwc) -added by LB
     !
-         If (MSR) WRITE (*,*), 'HSEDALL=', HSEDALL, 'SSTATEG3=', &
+         If (MSR) WRITE (*,*) 'HSEDALL=', HSEDALL, 'SSTATEG3=', &
         & SSTATEG3, 'SSTATEIC=', SSTATEIC, 'SSTATEAVG=', SSTATEAVG, 'QU&
         &ASISS=', QUASISS
     !

@@ -483,12 +483,12 @@ Contains
        !
        !
        !sanity check on optional argments
-            If (PRESENT(BG) .XOR. PRESENT(BL)) Then
+            If (PRESENT(BG) .neqv. PRESENT(BL)) Then
                Write (*,*) 'ERROR calling SCATTER(), BG and BL must be &
               &passed at the same time'
                Call pstop
             End If
-            If (PRESENT(CG) .XOR. PRESENT(CL)) Then
+            If (PRESENT(CG) .neqv. PRESENT(CL)) Then
                Write (*,*) 'ERROR calling SCATTER(), CG and CL must be &
               &passed at the same time'
                Call pstop

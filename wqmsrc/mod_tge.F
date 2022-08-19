@@ -416,7 +416,7 @@ Contains
           !
                If (JJB /= 1) Then
                   Write (*,*) 'ERROR IN ISONB !,I,J', I, J
-                  Pause
+                  call pstop
                End If
           !
                Do J = 2, NTVE (I)
