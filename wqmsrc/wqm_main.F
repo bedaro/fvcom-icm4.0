@@ -421,8 +421,8 @@ Program FVCOMICM
          IINT = IINT + 1
          THOUR = ELTMS / 3600.0
      !
-         if(MSR) call report_time(iint, int(tmstrt*86400), &
-               int(tmend*86400), jday * 86400)
+         if(MSR) call report_time(iint, int(tmstrt*86400/dlt), &
+               int(tmend*86400/dlt), eltms)
 !
      !
      ! time-varying forcing data
