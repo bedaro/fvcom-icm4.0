@@ -1,3 +1,4 @@
 *.F90
 test_*.inc
 test_mods
+test_core

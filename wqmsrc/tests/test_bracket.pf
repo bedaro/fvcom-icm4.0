@@ -1,0 +1,99 @@
+module test_bracket
+  use mod_prec, only: SP
+  use mod_types, only: BC
+  use funit
+  implicit none
+  type(BC) :: test_tm
+
+  contains
+    @before
+    subroutine set_up()
+      implicit none
+      test_tm%ntimes = 5
+      allocate(test_tm%times(test_tm%ntimes))
+      test_tm%times(1) = 1
+      test_tm%times(2) = 2
+      test_tm%times(3) = 3
+      test_tm%times(4) = 4
+      test_tm%times(5) = 5
+    end subroutine
+
+    @after
+    subroutine tear_down()
+      implicit none
+      deallocate(test_tm%times)
+    end subroutine
+
+    ! All tests where time is inside the range
+
+    ! Exactly on a time
+    @test
+    subroutine test_within_exact()
+      implicit none
+      real(SP) :: fact, bact
+      integer :: ierr, l1, l2
+
+      call bracket(test_tm, 2._SP, l1, l2, fact, bact, ierr)
+      @assertEqual(0, ierr)
+      @assertEqual(2, l1)
+      @assertEqual(3, l2)
+      @assertEqual(0._SP, fact)
+      @assertEqual(1._SP, bact)
+    end subroutine
+
+    ! Between two times
+    @test
+    subroutine test_within_between()
+      implicit none
+      real(SP) :: fact, bact
+      integer :: ierr, l1, l2
+
+      call bracket(test_tm, 3.6_SP, l1, l2, fact, bact, ierr)
+      @assertEqual(0, ierr)
+      @assertEqual(3, l1)
+      @assertEqual(4, l2)
+      @assertEqual(.6_SP, fact, tolerance=1E-3)
+      @assertEqual(.4_SP, bact, tolerance=1E-3)
+    end subroutine
+
+    ! End of series
+    @test
+    subroutine test_end()
+      implicit none
+      real(SP) :: fact, bact
+      integer :: ierr, l1, l2
+
+      call bracket(test_tm, 5._SP, l1, l2, fact, bact, ierr)
+      @assertEqual(0, ierr)
+      @assertEqual(4, l1)
+      @assertEqual(5, l2)
+      @assertEqual(1._SP, fact)
+      @assertEqual(0._SP, bact)
+    end subroutine
+
+    ! Past the end
+    @test
+    subroutine test_past_end()
+      implicit none
+      real(SP) :: fact, bact
+      integer :: ierr, l1, l2
+
+      call bracket(test_tm, 5.5_SP, l1, l2, fact, bact, ierr)
+      @assertEqual(1, ierr)
+      @assertEqual(5, l2)
+      @assertEqual(1._SP, fact)
+    end subroutine
+
+    ! Before the beginning
+    @test
+    subroutine test_before_beginning()
+      implicit none
+      real(SP) :: fact, bact
+      integer :: ierr, l1, l2
+
+      call bracket(test_tm, 0.5_SP, l1, l2, fact, bact, ierr)
+      @assertEqual(-1, ierr)
+      @assertEqual(1, l1)
+      @assertEqual(0._SP, fact)
+    end subroutine
+end module
