@@ -3147,6 +3147,7 @@ End Subroutine WQM_OUTPUT
 !---------------------------------------------------------------------------------------------
 SUBROUTINE DebugNan(MTC,KM1,Indx,TArry)
    USE MOD_PREC, ONLY: SP
+   use ieee_arithmetic
    IMPLICIT NONE
 
    INTEGER, INTENT(IN) :: MTC,KM1,Indx
@@ -3155,7 +3156,7 @@ SUBROUTINE DebugNan(MTC,KM1,Indx,TArry)
 
    DO i=1,KM1
     DO j=1,MTC
-        IF(ISNAN(TArry(j,i))) THEN
+        IF(ieee_is_nan(TArry(j,i))) THEN
             WRITE(*,*)"This variable goes to NAN", Indx
             STOP
         END IF
