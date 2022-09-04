@@ -179,32 +179,32 @@ Program FVCOMICM
      & CPOS, CPO4, CNH4, CNO3, CHS, CSI, DIAGN, SED_INIT2, &
      & SED_INIT_ICI, SED_DEALLOC, POM_ACCUMUL, SED_CALC, &
      & SED_DIAGENESIS_G3, AGGREGATE_POM_FLUX, FRACL1, FRACL2, FRACL3
-  !
+
       Use MOD_SED_DF_EXCHANGE_VARS, Only: SED_DF_EXCHANGE_ALLOC, &
      & SED_DF_EXCHANGE_DEALLOC
-  !
+
       Use MOD_SED_SF_EXCHANGE_VARS, Only: SED_SF_EXCHANGE_ALLOC, &
      & SED_SF_EXCHANGE_DEALLOC
-  !
+
       Use MOD_SED_SAV_EXCHANGE_VARS, Only: SED_SAV_EXCHANGE_ALLOC, &
      & SED_SAV_EXCHANGE_DEALLOC
-  !
+
       Use MOD_BA, Only: BALGAE_CALC, BBM, BBM_GL, BA_DEALLOC
-  !
+
       Use MOD_OBCS, Only: SETUP_OBC, OBCS_DEALLOC
-  !
+
       Use MOD_BCS, Only: BCS_DEALLOC
-  !
+
       Use MOD_SAV, Only: SAV_DEALLOC, SAV_LOADS_DEALLOC, SAV_COMP, &
 	 & LEAF, STEM, ROOT, TUBER, EP
-  !
+
 #  if defined (MULTIPROCESSOR)
       Use MOD_PAR, Only: ELID, NLID, ELID_X, NLID_X, NGID, EC, NC, BNC, &
      & EMAP, NMAP, NODE_MATCH_ALL, EXCHANGE_ALL, GATHER, INIT_MPI_ENV, &
      & PAR_DEALLOC, NBN, BN_LOC, BN_MLT !added to use node_match_all instead of exchange in line ~645
-!
+
 #  endif
-  !
+
       Use MOD_FILENAMES, Only: FNAMEPREFIX, FNAMEEXT !, ifindext
 
 # if defined (WET_DRY)
@@ -214,9 +214,9 @@ Program FVCOMICM
 #  if defined (MULTIPROCESSOR)
       Use MOD_BUFFERS, Only: RCVBUF, SNDBUF
 #  endif
-  !
+
       Use MOD_DF, Only: DFEEDER, DFEEDM1S_GL, DFEEDM1S, DF_DEALLOC
-  !
+
 #if defined (ONLY_AIRSEA)
       Use MOD_CO2SYS, Only: CO2star_sat, pCO2atm, CO2star_surf, &
      & AIRSEA_OPTION, UNITCO2ATM, K0, FugFac, DICGAS, &
@@ -235,43 +235,43 @@ Program FVCOMICM
       Integer :: J, JF, JG, JCON, K, L, N
       Integer :: I, II, III, ISF, JP, JNP
       Integer :: JS1, JS2, JS3, PRO2
-  !
+
       Integer :: MASTER_IINT !Test synchronization of while loop
       Real (SP) :: MASTER_ELTMS !Test synchronization of while loop
-!
+
       Character (Len=80) :: TEMPSTR
-  !
+
       Integer :: I1, I2
       Real (SP) :: ITT, TTMP1, TTMP2
-!
-  !Added logicals for writing station and history outputs
+
+      !Added logicals for writing station and history outputs
       Logical :: OPEN_HIS, PRINT_HIS
       Logical :: OPEN_STN, PRINT_STN
       Integer (4) :: CTR_HIS, CTR_STN !record counter for station and history outputs
-  !
+
       Integer (4) :: NTSTN_OLD, NTSTN
       Integer (4) :: NTHIS_OLD, NTHIS
-  !
-  !   CHARACTER(1024):: fnameprefix, fnameext
+
+      !CHARACTER(1024):: fnameprefix, fnameext
       Character (1024) :: HISFN_FILENUMBER
-  !
-  !Time the simulation here
-  !
+      !
+      !Time the simulation here
+      !
       Real (8) :: WTIME_MOD = 0.d0
       Real (8) :: WTIME_SYS = 0.d0
       Real (8) :: TOTAL_TIME = 0.d0
       Real (4) :: ETIME, DTIME !ETIME and DTIME are intrinsic functions to calculate time
       Real (4) :: ELAPSED (2)
-  !
+
       Character (Len=1024) :: TITLE_STN
-  !
+
       Character (Len=1024) :: COMMAND_STR, SLEEPTIME_STR
       Real (SP) :: SLEEPTIME
-  !
+
       Logical :: END_RUN_CHILD = .False.
       Integer :: ISNDTAG = 0, IRCVTAG = 0
-!
-!
+
+
 #if defined (ONLY_AIRSEA)
       Real (SP) :: FLUXCO2, TDOS, RNU, KRDO, KRCO2, FACTOR, Sc
       Real (SP) :: FACTORaux, CHLORN, AA, TSaux, DOS
@@ -283,16 +283,16 @@ Program FVCOMICM
 #if defined (INTERP_HYDRO)
 	  REAL (SP) :: UFACT, DFACT
 #endif
-!
-  !
-  !************************************************************************
-  !**                       Program Initialization                       **
-  !************************************************************************
-  !
-  !==============================================================================!
-  !   SETUP PARALLEL ENVIRONMENT                                                 !
-  !==============================================================================!
-  !
+
+      !
+      !************************************************************************
+      !**                       Program Initialization                       **
+      !************************************************************************
+      !
+      !=======================================================================!
+      !   SETUP PARALLEL ENVIRONMENT                                          !
+      !=======================================================================!
+      !
       SERIAL = .True.
       PAR = .False.
       MSR = .True.
@@ -301,11 +301,11 @@ Program FVCOMICM
 #  if defined (MULTIPROCESSOR)
       Call INIT_MPI_ENV (MYID, NPROCS, SERIAL, PAR, MSR)
 #  endif
-  !
-  !--IMPORT CASENAME FROM COMMAND LINE
+      !
+      !--IMPORT CASENAME FROM COMMAND LINE
       If (MSR) Then
          Call GETARG (1, TEMPSTR)
-     !
+
          If (LEN_TRIM(TEMPSTR) == 0) Then
             Write (*,*) 'PLEASE PROVIDE CASENAME ON COMMAND LINE'
             Write (*,*) 'STOPPING...'
@@ -313,48 +313,47 @@ Program FVCOMICM
          End If
          CASENAME = ADJUSTL (TEMPSTR)
       End If
-  !
+
       If (MSR) Then
          TOTAL_TIME = TOTAL_TIME + DTIME (ELAPSED)!CALL DTIME() and return user time in ELAPSED(1), system time in ELAPSED(2)
          WTIME_MOD = WTIME_MOD + ELAPSED (1)
          WTIME_SYS = WTIME_SYS + ELAPSED (2)
       End If
-  !
-  !
+
+
 #  if defined (MULTIPROCESSOR)
       Call MPI_BCAST (CASENAME, 80, MPI_CHARACTER, 0, MPI_COMM_WORLD, &
-     & IERR)
+         & IERR)
 #  endif
-  !
+
       Call INIT_FILE_INFO ()	!  Setup file handles for all modules
-  !
+
       Call INPUTS ()			!  Initialze
-  !
+
 
 #if defined (OUTPUT_NETCDF)
-	  CALL SET_NCD_IO(IREPORT)
+      CALL SET_NCD_IO(IREPORT)
 #endif
       If (SEDIMENT_CALC) Then
-     !
-     !CALL SED_INIT()          !  Setup sediment diagenesis module (including SED_ALLOC)
-     !CALL SED_INIT2()         !  initialize the values from input read by INPUTS() above
-     !
+         !
+         !CALL SED_INIT()          !  Setup sediment diagenesis module (including SED_ALLOC)
+         !CALL SED_INIT2()         !  initialize the values from input read by INPUTS() above
+         !
          If (DFEEDER) Then
             Call SED_DF_EXCHANGE_ALLOC
          End If
-     !
+
          Call SED_SF_EXCHANGE_ALLOC
-     !
+
          If (SAV_CALC) Then
             Call SED_SAV_EXCHANGE_ALLOC
          End If
       End If
-  !
-      Call SETUP_OBC
-  !
-  !CALL SET_BNDRY           !: Was in FVCOM, but now removed,
 
-  !
+      Call SETUP_OBC
+
+      !CALL SET_BNDRY           !: Was in FVCOM, but now removed,
+
       CTR_STN = 0 !counter for station output records
       CTR_HIS = 0 !counter for history output records
       PRINT_HIS = .False.
@@ -362,15 +361,15 @@ Program FVCOMICM
       OPEN_HIS = .False.
       OPEN_STN = .False.
       call start_clock
-  !
-  !counting numbe of steps past t_his_start and t_stn_start
-  !restart file there
-!
+      !
+      !counting numbe of steps past t_his_start and t_stn_start
+      !restart file there
+
       NTHIS_OLD = FLOOR ((JDAY-t_his_start)/t_his_dlt) - 1 !number of steps for history output
       NTSTN_OLD = FLOOR ((JDAY-t_stn_start)/t_stn_dlt) - 1 !number of steps for station output
       NTHIS = 0
       NTSTN = 0
-  !
+
       T (:, :) = C2 (:, :, 1)
       SALT (:, :) = C2 (:, :, 2)
       SSI (:, :) = C2 (:, :, 3)
@@ -407,42 +406,38 @@ Program FVCOMICM
       TALK (:, :) = C2 (:, :, 34)!
       IINT = 0
 
-   !Open (UNIT=199, File='IO_output.dat', action='write') !AN
 
-
-  !If(MSR) Write (*,*) 'LBnote 0. pH,pCO2,RHO(at some surf place)= ',pH(1,1),pCO2(1,1),RHO(1,1)
-  !
-  !************************************************************************
-  !**                          Begin Simulation                          **
-  !************************************************************************
-  !
+      !
+      !************************************************************************
+      !**                          Begin Simulation                          **
+      !************************************************************************
+      !
       Do WHILE ( .Not. END_RUN)
-     !
+
          IINT = IINT + 1
          THOUR = ELTMS / 3600.0
-     !
+
          if(MSR) call report_time(iint, int(tmstrt*86400/dlt), &
                int(tmend*86400/dlt), eltms)
-!
-     !
-     ! time-varying forcing data
-     !
 
-		 ! If (MSR) WRITE (*,*) 'JDAY1: ', JDAY,' NXTVD1', &
+         !
+         ! time-varying forcing data
+         !
+
+         ! If (MSR) WRITE (*,*) 'JDAY1: ', JDAY,' NXTVD1', &
          !  & NXTVD !AN
          If (JDAY >= NXTVD) Call TVDS (NXTVD)
-		 !  If (MSR) WRITE (*,*) 'JDAY2: ', JDAY,' NXTVD2', &
+		     !  If (MSR) WRITE (*,*) 'JDAY2: ', JDAY,' NXTVD2', &
          ! & NXTVD !AN
 
-!
 # if defined (MULTIPROCESSOR)
          If (PAR) Then
-!
-        !
-        !Here we should make sure ELTMS is the same for all processors
-        !as we are going to have a broadcasting from master process
-        !and only master process is reading the hydrodynamics.
-!
+
+            !
+            !Here we should make sure ELTMS is the same for all processors
+            !as we are going to have a broadcasting from master process
+            !and only master process is reading the hydrodynamics.
+
             If (MSR) Then !Master calculates its own IINT
                MASTER_IINT = IINT !Then broadcast it to all processes
                MASTER_ELTMS = ELTMS
@@ -451,12 +446,12 @@ Program FVCOMICM
            & MPI_COMM_WORLD, IERR)
             Call MPI_BCAST (MASTER_ELTMS, 1, MPI_REAL8, 0, &
            & MPI_COMM_WORLD, IERR)!Notice MPI_REAL8
-        !
+
             If (MASTER_IINT /= IINT) Then !child checks for consistency
                Write (*,*) 'MYID=', MYID, '. Oops, inconsistent time st&
               &ep here with master process'
             End If
-        !
+
             If (MASTER_ELTMS /= ELTMS) Then !child checks for consistency
                Write (*,*) 'MYID=', MYID, '. Oops, inconsistent time, E&
               &LTMS=', ELTMS
@@ -464,19 +459,19 @@ Program FVCOMICM
          End If
 # endif
 
-		 !ELTMS_hydro1 =<ELTMS <=ELTMS_hydro2
+         !ELTMS_hydro1 =<ELTMS <=ELTMS_hydro2
 
 
-!         If ((Mod(ELTMS, hydro_dlt).EQ.0.0) .And. (ELTMS > 0.0)) Then
+         !If ((Mod(ELTMS, hydro_dlt).EQ.0.0) .And. (ELTMS > 0.0)) Then
 
-		 !ELTMS_hydro2	= TMSTRT*86400.0_SP+(NTHYDRO-1)*hydro_dlt   !second record
-		 !ELTMS_hydro1	= ELTMS_hydro2-hydro_dlt					!first record
+         !ELTMS_hydro2	= TMSTRT*86400.0_SP+(NTHYDRO-1)*hydro_dlt !second record
+         !ELTMS_hydro1	= ELTMS_hydro2-hydro_dlt !first record
 
-		  If ( ELTMS>= ELTMS_hydro2 .AND. ELTMS > 0.0_SP) Then
-		  !If ( ELTMS>= ELTMS_hydro2 .AND. ELTMS > TMSTRT*86400.0_SP) Then  !This allow hydro_dlt to not be
-		  !    							            !integral multiple of DLT
+         If ( ELTMS>= ELTMS_hydro2 .AND. ELTMS > 0.0_SP) Then
+		     !If ( ELTMS>= ELTMS_hydro2 .AND. ELTMS > TMSTRT*86400.0_SP) Then  !This allow hydro_dlt to not be
+		     !    							            !integral multiple of DLT
 
-	        UNC1 = UNC2
+	          UNC1 = UNC2
             VNC1 = VNC2
             WNC1 = WNC2
             WTSNC1 = WTSNC2
@@ -488,50 +483,50 @@ Program FVCOMICM
             TNC1 = TNC2
             SNC1 = SNC2
 
-	       !update the master process' hydrodynamics in to UNC2, etc
+            !update the master process' hydrodynamics in to UNC2, etc
             If (MSR) Call HYDRO ()
 
-        !update the child process' hydrodynamics by broadcasting from master
+            !update the child process' hydrodynamics by broadcasting from master
 # if defined (MULTIPROCESSOR)
 
-        !Method A): scatter the hydrodynamics from master proc to other procs
-        !           This is supposed to be faster as the message size is smaller. However it does not work well yet
-!
-        !Method B) broadcast hydrodynamics from master proc to other procs
-            Call BROADCAST_HYDRO (0, UNC2, VNC2, WTSNC2, UARD_OBCNNC2, &
-           & XFLUX_OBCNC2, DTFANC2, KHNC2, ELNC2, TNC2, SNC2)
+            !Method A): scatter the hydrodynamics from master proc to other procs
+            !           This is supposed to be faster as the message size is smaller. However it does not work well yet
 
-		!Since only the master is reading hydro, we need to make sure
-		!all the records are correct for all the processors
-		!
-			Call MPI_BCAST (NTHYDRO, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, IERR)
-			Call MPI_BCAST (NTRECNC, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, IERR)
-			Call MPI_BCAST (IFNC, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, IERR)
+            !Method B) broadcast hydrodynamics from master proc to other procs
+            Call BROADCAST_HYDRO (0, UNC2, VNC2, WTSNC2, UARD_OBCNNC2, &
+               & XFLUX_OBCNC2, DTFANC2, KHNC2, ELNC2, TNC2, SNC2)
+
+		        !Since only the master is reading hydro, we need to make sure
+		        !all the records are correct for all the processors
+            !
+			      Call MPI_BCAST (NTHYDRO, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, IERR)
+			      Call MPI_BCAST (NTRECNC, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, IERR)
+			      Call MPI_BCAST (IFNC, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, IERR)
 
 # endif
          End If
-     !
-     !--Time interpolation of physical fields
-     !
+         !
+         !--Time interpolation of physical fields
+         !
 #if defined (INTERP_HYDRO)
-		 IF(MSR)THEN
-			ELTMS_hydro2	= TMSTRT*86400.0_SP+(NTHYDRO-1)*hydro_dlt   !second record
-			ELTMS_hydro1	= ELTMS_hydro2-hydro_dlt					!first record
-		 ENDIF
+         IF(MSR)THEN
+          ELTMS_hydro2	= TMSTRT*86400.0_SP+(NTHYDRO-1)*hydro_dlt   !second record
+          ELTMS_hydro1	= ELTMS_hydro2-hydro_dlt					!first record
+         ENDIF
 #	if defined (MULTIPROCESSOR)
-		 Call MPI_BCAST (ELTMS_hydro2, 1, MPI_F, 0, MPI_COMM_WORLD, IERR)
-		 Call MPI_BCAST (ELTMS_hydro1, 1, MPI_F, 0, MPI_COMM_WORLD, IERR)
+         Call MPI_BCAST (ELTMS_hydro2, 1, MPI_F, 0, MPI_COMM_WORLD, IERR)
+         Call MPI_BCAST (ELTMS_hydro1, 1, MPI_F, 0, MPI_COMM_WORLD, IERR)
 #	endif
-		 UFACT			= (ELTMS_hydro2-ELTMS)/hydro_dlt
-		 DFACT			= (ELTMS-ELTMS_hydro1)/hydro_dlt
+         UFACT			= (ELTMS_hydro2-ELTMS)/hydro_dlt
+         DFACT			= (ELTMS-ELTMS_hydro1)/hydro_dlt
 
-		!IF(ELTMS<ELTMS_hydro1)THEN
-		!							!for starting period, where the model time ELTMS
-		!							!is less than the first time step in the hydro netcdf
-		!							!use the first record only
-		!   UFACT=1.0
-		!   DFACT=0.0
-		! ENDIF
+         !IF(ELTMS<ELTMS_hydro1)THEN
+         !							!for starting period, where the model time ELTMS
+         !							!is less than the first time step in the hydro netcdf
+         !							!use the first record only
+         !   UFACT=1.0
+         !   DFACT=0.0
+         !ENDIF
 
          UU 			= UNC1*UFACT 		+ UNC2*DFACT
          VV 			= VNC1*UFACT 		+ VNC2*DFACT
@@ -544,17 +539,18 @@ Program FVCOMICM
          SALT 			= SNC1*UFACT 		+ SNC2*DFACT
          EL 			= ELNC1*UFACT 		+ ELNC2*DFACT
 
-		 IF(ELTMS > ELTMS_hydro2)THEN
-			IF(MSR)WRITE(*,*)'Oops, running out of hydroydnamics model results at NTHYDRO= ',NTHYDRO
-			IF(MSR)WRITE (*,*) 'NC File Number: ', IFNC+hydro_filenumstart-1
-			IF(MSR)WRITE(*,*) 'time1, time, time2, NHYD',ELTMS_hydro1,ELTMS, ELTMS_hydro2, NTHYDRO
-			CALL PSTOP
-		 ENDIF
-		!WRITE(*,*) 'MYID, time1, time, time2, NHYD',MYID,ELTMS_hydro1,ELTMS, ELTMS_hydro2, NTHYDRO
+         IF(ELTMS > ELTMS_hydro2)THEN
+			      IF(MSR)WRITE(*,*)'Oops, running out of hydroydnamics model &
+                    results at NTHYDRO= ',NTHYDRO
+            IF(MSR)WRITE (*,*) 'NC File Number: ', IFNC+hydro_filenumstart-1
+            IF(MSR)WRITE(*,*) 'time1, time, time2, NHYD',ELTMS_hydro1,ELTMS, ELTMS_hydro2, NTHYDRO
+            CALL PSTOP
+		     ENDIF
+         !WRITE(*,*) 'MYID, time1, time, time2, NHYD',MYID,ELTMS_hydro1,ELTMS, ELTMS_hydro2, NTHYDRO
 #else
-		 ELTMS_hydro2	= TMSTRT*86400.0_SP+(NTHYDRO-1)*hydro_dlt   !second record
-		 ELTMS_hydro1	= ELTMS_hydro2-hydro_dlt					!first record
-		 UU = UNC1
+         ELTMS_hydro2	= TMSTRT*86400.0_SP+(NTHYDRO-1)*hydro_dlt !second record
+         ELTMS_hydro1	= ELTMS_hydro2-hydro_dlt !first record
+         UU = UNC1
          VV = VNC1
          WTS = WTSNC1
          UARD_OBCN = UARD_OBCNNC1
@@ -568,73 +564,73 @@ Program FVCOMICM
 
          D = H + EL
 
+         ! BR FIXME: this is an inefficient copy. Update dens2
          C2 (:, :, 1) = T (:, :)
          C2 (:, :, 2) = SALT (:, :)
 
+         !IF (NLID(503) /= 0) THEN
+         !   write(*,*),'LBnote Ssurf(node503river)= ',SALT(NLID(503),1)
+         !   write(*,*),'LBnote Usurf(node503river)= ',UU(ELID(796),1)
+         !   write(*,*),'LBnote Vsurf(node503river)= ',VV(ELID(796),1)
+         !   write(*,*),'LBnote TAsur(node503river)= ',C2(NLID(503),1,34)
+         !END IF
 
-     !IF (NLID(503) /= 0) THEN
-     !   write(*,*),'LBnote Ssurf(node503river)= ',SALT(NLID(503),1)
-     !   write(*,*),'LBnote Usurf(node503river)= ',UU(ELID(796),1)
-     !   write(*,*),'LBnote Vsurf(node503river)= ',VV(ELID(796),1)
-     !   write(*,*),'LBnote TAsur(node503river)= ',C2(NLID(503),1,34)
-     !END IF
-     !
-     !--Calculate density ! 8 Jan 2015
+         !--Calculate density ! 8 Jan 2015
          Call DENS2
-!
-     !
-     !******* Dead sea case
-     !
+
+         !
+         !******* Dead sea case
+         !
          If ( .Not. FLOW) Then
             UU = 0.0
             VV = 0.0
             WTS = 0.0
 
-			!Need to check here to make sure D is positive
+            !Need to check here to make sure D is positive
          End If
-     !
+
 
 #if defined (WET_DRY)
-		 IF(WET_DRY_ON)THEN
-			CALL WD_WET_JUDGE
-		 ENDIF
+         IF(WET_DRY_ON)THEN
+            CALL WD_WET_JUDGE
+         ENDIF
 #endif
 
          If ( .Not. Z_DIFFUSION) KH = 0.0
          ELTMS1 = REAL (ELTMS, 8)
-     !******* Time-variable solar radiation
-     !--- TIME OF DAY (SECONDS)
+         !******* Time-variable solar radiation
+         !--- TIME OF DAY (SECONDS)
          RELTMS = ELTMS
          TODS = Mod (RELTMS, 86400.)
- !
 
-		 !If(MSR) Write (*,*) 'TODS, TTSS in main= ', TODS/86400., TTSS/86400.
- 		 !If(MSR) Write (*,*) 'FD, JDAY BF COND in main= ', FD, JDAY
- !
+
+         !If(MSR) Write (*,*) 'TODS, TTSS in main= ', TODS/86400., TTSS/86400.
+         !If(MSR) Write (*,*) 'FD, JDAY BF COND in main= ', FD, JDAY
+
          If (TODS < TTSS) Then
             I0 = 0.
-		 Else If (TODS > 86400.-TTSS) Then ! AN: Avoid spike at the end of the day
+         Else If (TODS > 86400.-TTSS) Then ! AN: Avoid spike at the end of the day
             I0 = 0.
-		 Else
-        !--- DAYS SINCE SUNRISE (DAYS)
+         Else
+            !--- DAYS SINCE SUNRISE (DAYS)
             DSSR = (TODS-TTSS) / 86400.
- !
+
             I0 = PI * IT * Sin (PI*DSSR/FD) / 2. / FD
- !
+
             !If(MSR) Write (*,*) 'FD, JDAY - in MAIN= ', FD, JDAY !AN
             I0 = Max (I0, 0.)
- !
+
          End If
 
-		 !If(MSR) Write (*,*) 'I0 - in MAIN= ', I0
-		 !If(MSR) Write (199,'(e14.6,e14.6)') JDAY, I0
+         !If(MSR) Write (*,*) 'I0 - in MAIN= ', I0
+         !If(MSR) Write (199,'(e14.6,e14.6)') JDAY, I0
 
-     !
-     !--- HARDWIRE LIGHT HERE
-     !        I0 = 1.0
-     !
-     !******* Light Attenuation
-     !
+         !
+         !--- HARDWIRE LIGHT HERE
+         !        I0 = 1.0
+         !
+         !******* Light Attenuation
+         !
          If (LIGHT_EXTINCTION) Then !Added this flag of LIGHT_EXTINCTION
             If (SAV_CALC .Or. ALGAE_CALC) Then
                If (JDAY >= NXKEI) Then
@@ -643,25 +639,25 @@ Program FVCOMICM
                End If
             End If
          End If
-     !
-     !******* SAV Submodel
-     !
+         !
+         !******* SAV Submodel
+         !
          SAVENT = - 9999
          If (SAV_CALC) Then
             Call SAV_COMP
          End If
-     !
-     !******* Determine cell quota for this time step
-     !Reactivated calculation of Q1,Q2,Q3
+         !
+         !******* Determine cell quota for this time step
+         !Reactivated calculation of Q1,Q2,Q3
          Do K = 1, KBM1
             Do I = 1, MLOC
                Q1 (I, K) = PIB1 (I, K) / (B1(I, K)+1.0E-9)!Phosphorus to Carbon Ration in Alg 1 (gP/gC)
                Q2 (I, K) = PIB2 (I, K) / (B2(I, K)+1.0E-9)!Phosphorus to Carbon Ration in Alg 2 (gP/gC)
                Q3 (I, K) = PIB3 (I, K) / (B3(I, K)+1.0E-9)!Phosphorus to Carbon Ration in Alg 1 (gP/gC)
-           !
-           !:: for testing sediment diageesis
-           !:: give a constant value
-           !
+               !
+               !:: for testing sediment diageesis
+               !:: give a constant value
+               !
                If (SEDIMENT_CALC .And. ACC(30) == 'OFF') Then
                   Q1 (I, K) = 0.0243
                End If
@@ -671,22 +667,22 @@ Program FVCOMICM
                If (SEDIMENT_CALC .And. ACC(32) == 'OFF') Then
                   Q3 (I, K) = 0.0243
                End If
-           !
+
             End Do
          End Do
-     !If(MSR) Write (*,*) 'LBnote 1. pH,pCO2,RHO(at some surf place)= ',pH(1,1),pCO2(1,1),RHO(1,1)
-     !******* Water column kinetics
+         !If(MSR) Write (*,*) 'LBnote 1. pH,pCO2,RHO(at some surf place)= ',pH(1,1),pCO2(1,1),RHO(1,1)
+         !******* Water column kinetics
 #if !defined (NO_BIOLOGY) && !defined (ONLY_AIRSEA)
-     !     IF (TEMPERATURE_CALC) CALL TEMPER(DTC(0,1,1))
+         !IF (TEMPERATURE_CALC) CALL TEMPER(DTC(0,1,1))
 
          DTC (:, :, 1) = 0.0
 
          If (SOLIDS_CALC) Call SOLIDS (DTC(0, 1, 3), FLUXS(0, 1, 1))!
-     !
+
          If (Mod(ELTMS, DLT) .Eq. 0) Then
-        ! Added sub cycling of ecosystem model, above
-        ! IF(MSR) WRITE(*,*)'calling ecosystem model'
-!
+            ! Added sub cycling of ecosystem model, above
+            ! IF(MSR) WRITE(*,*)'calling ecosystem model'
+
 #     if(1)
             If (ZOO_CALC) Call ZOOPL (DTC(0, 1, 7), DTC(0, 1, 8))
             If (ALGAE_CALC) Call ALGAE (DTC(0, 1, 4), DTC(0, 1, 5), &
@@ -705,14 +701,14 @@ Program FVCOMICM
             If (OXYGEN_CALC) Call OXYGEN (DTC(0, 1, 27))
             If (SILICA_CALC) Call SILICA (DTC(0, 1, 28), DTC(0, 1, 29), &
            & FLUXS(0, 1, 10))
-        !
-        !If(MSR) Write (*,*) 'LBnote 2. pH,pCO2,RHO(at some surf place)= ',pH(1,1),pCO2(1,1),RHO(1,1)
+            !
+            !If(MSR) Write (*,*) 'LBnote 2. pH,pCO2,RHO(at some surf place)= ',pH(1,1),pCO2(1,1),RHO(1,1)
             If (CARBONATE_CALC) Then
                Call CALC_PH_PCO2
                Call TOTINC (DTC(0, 1, 33))!DTC for TDIC and TALK is in mmol/m3/sec
                Call ALKALIN (DTC(0, 1, 34))!(rather than g/m3/sec like other variables)
             End If
-        !
+
             SFENT = - 9999
             If (SFEEDER) Then
                Do I = 1, NSPECIES
@@ -724,37 +720,37 @@ Program FVCOMICM
                End Do
             End If
 #     endif
-        !     *** Convert water column change in concentration to change in mass
+            ! *** Convert water column change in concentration to change in mass
             Do JCON = 1, NAC
                II = AC (JCON)
                Do K = 1, KBM1
                   Do I = 1, MLOC
 #  if !defined (WET_DRY)
-						IF(D(I) > 0.0_SP)THEN
+                     IF(D(I) > 0.0_SP)THEN
 #  else
-						IF(ISWETN(I) == 1)THEN
+                     IF(ISWETN(I) == 1)THEN
 #  endif
-							DTM (I, K, II) = DTC (I, K, II)
-						ELSE
-							DTC (I, K, II) = 0.0_SP
-							DTM (I, K, II) = DTC (I, K, II)
-						ENDIF
+                        DTM (I, K, II) = DTC (I, K, II)
+                     ELSE
+                        DTC (I, K, II) = 0.0_SP
+                        DTM (I, K, II) = DTC (I, K, II)
+                     ENDIF
                   End Do
                End Do
             End Do
-        !
+
          End If
-     !
-     !***** Horizontal diffusion
-     !
-     !If (XY_DIFFUSION .And. XYDF < 0.0) Call VISCOF_H  !
-         Call VISCOF_H !
-!
-!Uncommented VERTVL below for full if needed
-!      CALL VERTVL  !: 
-!
+         !
+         !***** Horizontal diffusion
+         !
+         !If (XY_DIFFUSION .And. XYDF < 0.0) Call VISCOF_H
+         Call VISCOF_H
+         !
+         !Uncommented VERTVL below for full if needed
+         !CALL VERTVL
+         !
 !#if defined (WET_DRY)
-!		IF(WET_DRY_ON) CALL WD_UPDATE(2) !update wet_dry if DTFA is changed by VERTVL above
+!         IF(WET_DRY_ON) CALL WD_UPDATE(2) !update wet_dry if DTFA is changed by VERTVL above
 !#endif
 
          Call EXCHANGE_WQM (C2)		
@@ -765,22 +761,22 @@ Program FVCOMICM
             Do I = 1, MLOC
                Do K = 1, KBM1
 #  if !defined (WET_DRY)
-					IF(D(I) > 0.0_SP)THEN
+                  IF(D(I) > 0.0_SP)THEN
 #  else
-					IF(ISWETN(I) == 1)THEN
+                  IF(ISWETN(I) == 1)THEN
 #  endif
-						C2F (I, K, II) = C2F (I, K, II) + DTM (I, K, II) * &
-                 & DLT
-					ENDIF
+                     C2F (I, K, II) = C2F (I, K, II) + DTM (I, K, II) * &
+                        & DLT
+                  ENDIF
 
                   C2F (I, K, II) = Max (C2F(I, K, II), 0.0)
                   If (II .Eq. 4 .Or. II .Eq. 5 .Or. II .Eq. 6) Then
                      C2F (I, K, II) = Max (C2F(I, K, II), 0.003)
-									!make sure there are seeds for ALG1,2 and 3
-				  End If
-				  If (II .Eq. 7 .Or. II .Eq. 8) Then
+	                   !make sure there are seeds for ALG1,2 and 3
+                  End If
+                  If (II .Eq. 7 .Or. II .Eq. 8) Then
                      C2F (I, K, II) = Max (C2F(I, K, II), 0.001)
-									!make sure there are seeds for SZ and LZ !Adi
+                     !make sure there are seeds for SZ and LZ !Adi
                   End If
                End Do
             End Do
@@ -795,61 +791,61 @@ Program FVCOMICM
          ET = EL
          DT = D
 
-     !
-     !-------------------------------------------------------------------------------
-     !******* pH and pCO2 were calculated with TDIC and TALK before advection and diffusion.
-     !        Therefore, to keep pH and pCO2 up to the current time, we need to call
-     !        calc_pH_pCO2 again - but only if we're saving pH and pCO2 in the output (otherwise, we don't really care!)
+         !
+         !-------------------------------------------------------------------------------
+         !******* pH and pCO2 were calculated with TDIC and TALK before advection and diffusion.
+         !        Therefore, to keep pH and pCO2 up to the current time, we need to call
+         !        calc_pH_pCO2 again - but only if we're saving pH and pCO2 in the output (otherwise, we don't really care!)
          If (CARBONATE_CALC) Then
             Call CALC_PH_PCO2 !(pH,pCO2)
          End If
-     !-------------------------------------------------------------------------------
-     !
-!
+         !-------------------------------------------------------------------------------
+         !
+
 # if(1) /* Moved sediment calculation after WQ update */
-     !
-     !******* Sediment kinetics
-     !
+         !
+         !******* Sediment kinetics
+         !
          SEDENT = - 9999
-         If (SEDIMENT_CALC) Then !---------------------------------------------------------
-			!set initial condition using steady state calculation
+         If (SEDIMENT_CALC) Then
+            !set initial condition using steady state calculation
             If ((STEADY_STATE_SED_IC) .And. (JDAY < &
-           & TMSTRT+DLT/86400.0)) Then
+                 & TMSTRT+DLT/86400.0)) Then
                Call SED_INIT_ICI !to make sure the sediment CTEMP get the initial condition of temperature from
-           !just updated water column (end of first time step)
-           !
-           !OR SIMPLY USE the following line
-           ! CTEMP=T(:,KBM1)
-           !
-           !
+               !just updated water column (end of first time step)
+               !
+               !OR SIMPLY USE the following line
+               ! CTEMP=T(:,KBM1)
+               !
+               !
                Call POM_ACCUMUL
-           !
+
                If (AGGREGATE_POM_FLUX) Then !: Option to accumulate all labilities from water column and then distribute them to labilities in sediments
                   Do I = 1, MLOC
-                 !Accumulate all labilities into JPOM(I,1)
+                     !Accumulate all labilities into JPOM(I,1)
                      JPOCaccum (I, 1) = JPOCaccum (I, 1) + JPOCaccum &
                     & (I, 2) + JPOCaccum (I, 3)
                      JPONaccum (I, 1) = JPONaccum (I, 1) + JPONaccum &
                     & (I, 2) + JPONaccum (I, 3)
                      JPOPaccum (I, 1) = JPOPaccum (I, 1) + JPOPaccum &
                     & (I, 2) + JPOPaccum (I, 3)
-                 !
-                 !Divide JPOM(I,1) into labilities according to FRACL1,FRACL2,FRACL3 (given in BFI input)
+
+                     !Divide JPOM(I,1) into labilities according to FRACL1,FRACL2,FRACL3 (given in BFI input)
                      JPOC (I, 1) = JPOCaccum (I, 1) * FRACL1
                      JPON (I, 1) = JPONaccum (I, 1) * FRACL1
                      JPOP (I, 1) = JPOPaccum (I, 1) * FRACL1
-                 !
+
                      JPOC (I, 2) = JPOCaccum (I, 1) * FRACL2
                      JPON (I, 2) = JPONaccum (I, 1) * FRACL2
                      JPOP (I, 2) = JPOPaccum (I, 1) * FRACL2
-                 !
+
                      JPOC (I, 3) = JPOCaccum (I, 1) * FRACL3
                      JPON (I, 3) = JPONaccum (I, 1) * FRACL3
                      JPOP (I, 3) = JPOPaccum (I, 1) * FRACL3
-                 !
+
                      JPOS (I) = JPOSaccum (I)
                   End Do
-              !
+
                Else
                   Do I = 1, MLOC
                      Do K = 1, 3
@@ -862,60 +858,60 @@ Program FVCOMICM
                End If
 
 
-           !
+
                Call SED_CALC (.True.)!True means use steady state solution as initial condition in sediment module
                Call SED_INIT2 !set the initial conditions using the calcualated value
-           !
-           !set accumulative fluxes back to zero
+               !
+               !set accumulative fluxes back to zero
                JPOCaccum = 0.0
                JPONaccum = 0.0
                JPOPaccum = 0.0
                JPOSaccum = 0.0
             End If !**********************
-        !
-        !: Here we call POM_ACCUMUL to accumulate organic matter in JPOM variables during NDTSED time steps.
-        !    Then, we divide JPOM/NDTSED to calculate average JPOM in that period.
-        !    The resulting JPOM is used in SED_CALC, which is only called every NDTSED timesteps
-        !
+            !
+            !: Here we call POM_ACCUMUL to accumulate organic matter in JPOM variables during NDTSED time steps.
+            !    Then, we divide JPOM/NDTSED to calculate average JPOM in that period.
+            !    The resulting JPOM is used in SED_CALC, which is only called every NDTSED timesteps
+            !
             Call POM_ACCUMUL
-!
+
             If (Mod(NIT, NDTSED) .Eq. 0 .And. NIT .Ne. 0) Then !: if NIT is multiple of NDTSED, then average JPOM and call sed_calc
-           !
+
                If (AGGREGATE_POM_FLUX) Then !: Option to accumulate all labilities from water column and then distribute them to labilities in sediments
                   Do I = 1, MLOC
-                 !Accumulate all labilities into JPOM(I,1)
+                     !Accumulate all labilities into JPOM(I,1)
                      JPOCaccum (I, 1) = JPOCaccum (I, 1) + JPOCaccum &
-                    & (I, 2) + JPOCaccum (I, 3)
+                        & (I, 2) + JPOCaccum (I, 3)
                      JPONaccum (I, 1) = JPONaccum (I, 1) + JPONaccum &
-                    & (I, 2) + JPONaccum (I, 3)
+                        & (I, 2) + JPONaccum (I, 3)
                      JPOPaccum (I, 1) = JPOPaccum (I, 1) + JPOPaccum &
-                    & (I, 2) + JPOPaccum (I, 3)
-                 !
-                 !Divide JPOM(I,1) into labilities according to FRACL1,FRACL2,FRACL3 (given in BFI input)
+                        & (I, 2) + JPOPaccum (I, 3)
+                     !
+                     !Divide JPOM(I,1) into labilities according to FRACL1,FRACL2,FRACL3 (given in BFI input)
                      JPOC (I, 1) = JPOCaccum (I, 1) * FRACL1 / REAL &
-                    & (NDTSED)
+                        & (NDTSED)
                      JPON (I, 1) = JPONaccum (I, 1) * FRACL1 / REAL &
-                    & (NDTSED)
+                        & (NDTSED)
                      JPOP (I, 1) = JPOPaccum (I, 1) * FRACL1 / REAL &
-                    & (NDTSED)
-                 !
+                        & (NDTSED)
+
                      JPOC (I, 2) = JPOCaccum (I, 1) * FRACL2 / REAL &
-                    & (NDTSED)
+                        & (NDTSED)
                      JPON (I, 2) = JPONaccum (I, 1) * FRACL2 / REAL &
-                    & (NDTSED)
+                        & (NDTSED)
                      JPOP (I, 2) = JPOPaccum (I, 1) * FRACL2 / REAL &
-                    & (NDTSED)
-                 !
+                        & (NDTSED)
+
                      JPOC (I, 3) = JPOCaccum (I, 1) * FRACL3 / REAL &
-                    & (NDTSED)
+                        & (NDTSED)
                      JPON (I, 3) = JPONaccum (I, 1) * FRACL3 / REAL &
-                    & (NDTSED)
+                        & (NDTSED)
                      JPOP (I, 3) = JPOPaccum (I, 1) * FRACL3 / REAL &
-                    & (NDTSED)
-                 !
+                        & (NDTSED)
+
                      JPOS (I) = JPOSaccum (I) / REAL (NDTSED)
                   End Do
-              !
+
                Else
                   Do I = 1, MLOC
                      Do K = 1, 3
@@ -926,35 +922,33 @@ Program FVCOMICM
                      JPOS (I) = JPOSaccum (I) / REAL (NDTSED)
                   End Do
                End If
-           !
+
                If (STEADY_STATE_SED_TS) Then
                   Call SED_CALC (.True.)!quasi-steady state calculation
                Else
                   Call SED_CALC (.False.)!FALSE means use time-varying calculation
                End If
-           !
-           !set accumulative fluxes back to zero
+               !
+               !set accumulative fluxes back to zero
                JPOCaccum = 0.0
                JPONaccum = 0.0
                JPOPaccum = 0.0
                JPOSaccum = 0.0
-           !
+
             End If
-        !
+
          Else If (BENTHIC_FLUXES) Then !---------------------------------------------------------
             Call BEN_FLUX
          End If !---------------------------------------------------------
-     !
+
 ! SEDIMENT CALC
 # endif
 ! !defined (NO_BIOLOGY)
 #endif
 
-
-
 #if defined (ONLY_AIRSEA)
-     !: case with no biology but open to atmospheric exchange (DO and TDIC) 
-!
+         !: case with no biology but open to atmospheric exchange (DO and TDIC)
+
          DTM = 0.0
          If (UNITCO2ATM == 'pCO2') Then !if we provided pCO2atm in microatm or ppmv
             Do I = 0, MLOC
@@ -970,26 +964,26 @@ Program FVCOMICM
                CO2star_sat (I) = auxLB
             End Do
          End If
-!
+
          If (AIRSEA_OPTION == 1) Then !using AREAR,BREAR,and CREAR
-!
+
             FACTORaux = AREAR * (BREAR*WMS) ** CREAR
             Do I = 1, MLOC
                TDOS = T (I, 1)
                RNU = 0.54 + 0.7 * TDOS / 30.0 - 0.07 * SALT (I, 1) / &
               & 35.0
-           !            KRDO      = 0.157*RNU*(1.5*WMS)**1.5
+               !            KRDO      = 0.157*RNU*(1.5*WMS)**1.5
                KRDO = FACTORaux * RNU !up to here, same as in calculation of air-sea O2 fluxes (m/day)
                KRCO2 = (32.0/44.0) ** 0.25 * KRDO !conversion of oxygen reareation into CO2 reareagion rate by Chapra (1997)
-!
+
            !CO2 exchange
                FLUXCO2 = KRCO2 / (D(I)*DZ2D(I,1)) * &
               & (CO2star_sat(I)-CO2star_surf(I))
-!
+
                DTM (I, 1, 33) = FLUXCO2 / 86400.0
            !DICGAS(I,1) = FLUXCO2  !TDIC flux from air-sea gas exchange, snapshot  mmolC/m3/d
                DICGAS (I, 1) = DICGAS (I, 1) + FLUXCO2 !TDIC flux from air-sea gas exchange, accumulated
-!
+
            !oxygen exchange
                CHLORN = SALT (I, 1) / 1.80655
                DOS = 14.5532 + TDOS * (0.0054258*TDOS-0.38217) - CHLORN &
@@ -997,10 +991,10 @@ Program FVCOMICM
                DTM (I, 1, 27) = KRDO / (D(I)*DZ2D(I,1)) * & (DOS-DOXG(I, &
               & 1)) / 86400.
             End Do
-!
+
          !Else
          Else If(AIRSEA_OPTION>1 .AND. AIRSEA_OPTION<=5) Then
-!
+
             If (AIRSEA_OPTION == 2) Then !Wanninkhof (1992)
                FACTORaux = 0.31 * WMS ** 2.0 !0.31 for winds in steady staate;  0.39 for long-term averaged winds
             Else If (AIRSEA_OPTION == 3) Then !Nightingale (2000)
@@ -1010,127 +1004,126 @@ Program FVCOMICM
             Else If (AIRSEA_OPTION == 5) Then !Wanninkhof et al (2013): wind in equation is <U^2>,meaning the time mean of U^2
                FACTORaux = 0.251 * WMS ** 2.0 !over the time interval of flux determination (they compute monthly fluxes with 6hourly wind data)
             End If
-!
+
             Do I = 1, MLOC
-           !CO2 exchange
+               !CO2 exchange
                Sc = 2073.1 - 125.62 * T (I, 1) + 3.6276 * T (I, 1) ** &
               & 2.0 - 0.043219 * T (I, 1) ** 3.0 !Schmidt number for CO2 (W92)
-           !Sc = 2116.8 - 136.25 * T(I,1) + 4.7353 * T(I,1)**2.0          &
-                !     - 0.092307 * T(I,1)**3.0 + 0.0007555 * T(I,1)**4.0     !Schmidt number for CO2 (W14)
-!
+               !Sc = 2116.8 - 136.25 * T(I,1) + 4.7353 * T(I,1)**2.0          &
+               !     - 0.092307 * T(I,1)**3.0 + 0.0007555 * T(I,1)**4.0     !Schmidt number for CO2 (W14)
+
                KRCO2 = FACTORaux * Sqrt (660.0/Sc)!gas transfer velocity in cm/hr
                KRCO2 = KRCO2 * 24.0 / 100.0 !m/day
-!
+
                FLUXCO2 = KRCO2 / (D(I)*DZ2D(I,1)) * &
               & (CO2star_sat(I)-CO2star_surf(I))!mmolC/m3/d
-!
+
                DTM (I, 1, 33) = FLUXCO2 / 86400.0 !mmolC/m3/sec
-           !DICGAS(I,1) = FLUXCO2  !TDIC flux from air-sea gas exchange, snapshot   !mmolC/m3/day
+               !DICGAS(I,1) = FLUXCO2  !TDIC flux from air-sea gas exchange, snapshot   !mmolC/m3/day
                DICGAS (I, 1) = DICGAS (I, 1) + FLUXCO2 !TDIC flux from air-sea gas exchange, accumulated
-!
-           !oxygen exchange
+
+               !oxygen exchange
                Sc = 1953.4 - 128.0 * T (I, 1) + 3.9918 * T (I, 1) ** &
-              & 2.0 - 0.050091 * T (I, 1) ** 3.0 !Schmidt number for O2 (W92)
-           !  Sc = 1920.4 - 135.6 * T(I,1) + 5.2122 * T(I,1)**2.0          &
-           !       - 0.10939 * T(I,1)**3.0 + 0.00093777 * T(I,1)**4.0    !Schmidt number for O2 (W14)
-!
+                  & 2.0 - 0.050091 * T (I, 1) ** 3.0 !Schmidt number for O2 (W92)
+               !  Sc = 1920.4 - 135.6 * T(I,1) + 5.2122 * T(I,1)**2.0          &
+               !       - 0.10939 * T(I,1)**3.0 + 0.00093777 * T(I,1)**4.0    !Schmidt number for O2 (W14)
+
                KRDO = FACTORaux * Sqrt (660.0/Sc)!gas transfer velocity (W12) in cm/hr
                KRDO = KRDO * 24.0 / 100.0 !m/day
-!
-           !:
-           !  Calculate O2 saturation concentration using Garcia and Gordon
-           !  L&O (1992) formula, (EXP(AA) is in ml/l).
-           !
+
+               !:
+               !  Calculate O2 saturation concentration using Garcia and Gordon
+               !  L&O (1992) formula, (EXP(AA) is in ml/l).
+               !
                TSaux = Log ((298.15-T(I, 1))/(273.15+T(I, 1)))
                AA = 2.00907 + TSaux * (3.22014+TSaux*(4.05010+&
-              & TSaux*(4.94457+TSaux*(-0.256847+TSaux*3.88767)))) + &
-              & SALT (I, 1) * (-0.00624523+TSaux*(-0.00737614+TSaux*(-&
-              & 0.0103410+TSaux*-0.00817083))) + - 0.000000488682 * &
-              & SALT (I, 1) * SALT (I, 1)
-!
+                  & TSaux*(4.94457+TSaux*(-0.256847+TSaux*3.88767)))) + &
+                  & SALT (I, 1) * (-0.00624523+TSaux*(-0.00737614+TSaux*(-&
+                  & 0.0103410+TSaux*-0.00817083))) + - 0.000000488682 * &
+                  & SALT (I, 1) * SALT (I, 1)
+
                DOS = Exp (AA) * 1.429 !  Converting from ml/l to mg/l (1mg/l=22.391/31.998 ml/l ~ 0.7ml/l)
-!
+
                DTM (I, 1, 27) = KRDO / (D(I)*DZ2D(I,1)) * (DOS-DOXG(I, 1)) &
-              & / 86400.
+                  & / 86400.
             End Do
-		 Else If(AIRSEA_OPTION == 6) Then ! Combination of Option 1 method and Wanninkhof et al (2013)
-		    FACTORaux = AREAR * (BREAR*WMS) ** CREAR
-!
-			If(MSR) Write (*,*) 'JDAY= ',JDAY
-			Do I = 1, MLOC
-			 If (JDAY <= JDstart1(1) .OR. JDAY >= JDstart1(2)) Then
-               TDOS = T (I, 1)
-               RNU = 0.54 + 0.7 * TDOS / 30.0 - 0.07 * SALT (I, 1) / &
-              & 35.0
-           !            KRDO      = 0.157*RNU*(1.5*WMS)**1.5
-               KRDO = FACTORaux * RNU !up to here, same as in calculation of air-sea O2 fluxes (m/day)
-               KRCO2 = (32.0/44.0) ** 0.25 * KRDO !conversion of oxygen reareation into CO2 reareagion rate by Chapra (1997)
-!
-!
-           !oxygen exchange
-               CHLORN = SALT (I, 1) / 1.80655
-               DOS = 14.5532 + TDOS * (0.0054258*TDOS-0.38217) - CHLORN &
-              & * (0.1665+TDOS*(9.796E-5*TDOS-5.866E-3))
-!
-			 Else If (JDAY > JDstart1(1) .AND. JDAY < JDstart1(2)) Then
-           !CO2 exchange
-               Sc = 2073.1 - 125.62 * T (I, 1) + 3.6276 * T (I, 1) ** &
-              & 2.0 - 0.043219 * T (I, 1) ** 3.0 !Schmidt number for CO2 (W92)
-           !Sc = 2116.8 - 136.25 * T(I,1) + 4.7353 * T(I,1)**2.0          &
-                !     - 0.092307 * T(I,1)**3.0 + 0.0007555 * T(I,1)**4.0     !Schmidt number for CO2 (W14)
-!
-               KRCO2 = FACTORaux * Sqrt (660.0/Sc)!gas transfer velocity in cm/hr
-               KRCO2 = KRCO2 * 24.0 / 100.0 !m/day
-!
-           !oxygen exchange
-               Sc = 1953.4 - 128.0 * T (I, 1) + 3.9918 * T (I, 1) ** &
-              & 2.0 - 0.050091 * T (I, 1) ** 3.0 !Schmidt number for O2 (W92)
-           !  Sc = 1920.4 - 135.6 * T(I,1) + 5.2122 * T(I,1)**2.0          &
-           !       - 0.10939 * T(I,1)**3.0 + 0.00093777 * T(I,1)**4.0    !Schmidt number for O2 (W14)
-!
-               KRDO = FACTORaux * Sqrt (660.0/Sc)!gas transfer velocity (W12) in cm/hr
-               KRDO = KRDO * 24.0 / 100.0 !m/day
-!
-           !:
-           !  Calculate O2 saturation concentration using Garcia and Gordon
-           !  L&O (1992) formula, (EXP(AA) is in ml/l).
-           !
-               TSaux = Log ((298.15-T(I, 1))/(273.15+T(I, 1)))
-               AA = 2.00907 + TSaux * (3.22014+TSaux*(4.05010+&
-              & TSaux*(4.94457+TSaux*(-0.256847+TSaux*3.88767)))) + &
-              & SALT (I, 1) * (-0.00624523+TSaux*(-0.00737614+TSaux*(-&
-              & 0.0103410+TSaux*-0.00817083))) + - 0.000000488682 * &
-              & SALT (I, 1) * SALT (I, 1)
-!
-               DOS = Exp (AA) * 1.429 !  Converting from ml/l to mg/l (1mg/l=22.391/31.998 ml/l ~ 0.7ml/l)
-!
-			 END IF
-!
-			  FLUXCO2 = KRCO2 / (D(I)*DZ(1)) * &
-             & (CO2star_sat(I)-CO2star_surf(I))!mmolC/m3/d
-!
-              DTM (I, 1, 33) = FLUXCO2 / 86400.0 !mmolC/m3/sec
-           !DICGAS(I,1) = FLUXCO2  !DIC flux from air-sea gas exchange, snapshot   !mmolC/m3/day
-              DICGAS (I, 1) = DICGAS (I, 1) + FLUXCO2 !DIC flux from air-sea gas exchange, accumulated
-!
-              DTM (I, 1, 27) = KRDO / (D(I)*DZ(1)) * (DOS-DOXG(I, 1)) &
-             & / 86400.
+         Else If(AIRSEA_OPTION == 6) Then ! Combination of Option 1 method and Wanninkhof et al (2013)
+            FACTORaux = AREAR * (BREAR*WMS) ** CREAR
+
+            If(MSR) Write (*,*) 'JDAY= ',JDAY
+            Do I = 1, MLOC
+               If (JDAY <= JDstart1(1) .OR. JDAY >= JDstart1(2)) Then
+                  TDOS = T (I, 1)
+                  RNU = 0.54 + 0.7 * TDOS / 30.0 - 0.07 * SALT (I, 1) / &
+                     & 35.0
+                  !            KRDO      = 0.157*RNU*(1.5*WMS)**1.5
+                  KRDO = FACTORaux * RNU !up to here, same as in calculation of air-sea O2 fluxes (m/day)
+                  KRCO2 = (32.0/44.0) ** 0.25 * KRDO !conversion of oxygen reareation into CO2 reareagion rate by Chapra (1997)
+
+                  !oxygen exchange
+                  CHLORN = SALT (I, 1) / 1.80655
+                  DOS = 14.5532 + TDOS * (0.0054258*TDOS-0.38217) - CHLORN &
+                     & * (0.1665+TDOS*(9.796E-5*TDOS-5.866E-3))
+
+               Else If (JDAY > JDstart1(1) .AND. JDAY < JDstart1(2)) Then
+                  !CO2 exchange
+                  Sc = 2073.1 - 125.62 * T (I, 1) + 3.6276 * T (I, 1) ** &
+                     & 2.0 - 0.043219 * T (I, 1) ** 3.0 !Schmidt number for CO2 (W92)
+                  !Sc = 2116.8 - 136.25 * T(I,1) + 4.7353 * T(I,1)**2.0          &
+                  !     - 0.092307 * T(I,1)**3.0 + 0.0007555 * T(I,1)**4.0     !Schmidt number for CO2 (W14)
+
+                  KRCO2 = FACTORaux * Sqrt (660.0/Sc)!gas transfer velocity in cm/hr
+                  KRCO2 = KRCO2 * 24.0 / 100.0 !m/day
+
+                  !oxygen exchange
+                  Sc = 1953.4 - 128.0 * T (I, 1) + 3.9918 * T (I, 1) ** &
+                     & 2.0 - 0.050091 * T (I, 1) ** 3.0 !Schmidt number for O2 (W92)
+                  !  Sc = 1920.4 - 135.6 * T(I,1) + 5.2122 * T(I,1)**2.0          &
+                  !       - 0.10939 * T(I,1)**3.0 + 0.00093777 * T(I,1)**4.0    !Schmidt number for O2 (W14)
+
+                  KRDO = FACTORaux * Sqrt (660.0/Sc)!gas transfer velocity (W12) in cm/hr
+                  KRDO = KRDO * 24.0 / 100.0 !m/day
+
+                  !:
+                  !  Calculate O2 saturation concentration using Garcia and Gordon
+                  !  L&O (1992) formula, (EXP(AA) is in ml/l).
+                  !
+                  TSaux = Log ((298.15-T(I, 1))/(273.15+T(I, 1)))
+                  AA = 2.00907 + TSaux * (3.22014+TSaux*(4.05010+&
+                     & TSaux*(4.94457+TSaux*(-0.256847+TSaux*3.88767)))) + &
+                     & SALT (I, 1) * (-0.00624523+TSaux*(-0.00737614+TSaux*(-&
+                     & 0.0103410+TSaux*-0.00817083))) + - 0.000000488682 * &
+                     & SALT (I, 1) * SALT (I, 1)
+
+                  DOS = Exp (AA) * 1.429 !  Converting from ml/l to mg/l (1mg/l=22.391/31.998 ml/l ~ 0.7ml/l)
+
+               END IF
+
+               FLUXCO2 = KRCO2 / (D(I)*DZ(1)) * &
+                    & (CO2star_sat(I)-CO2star_surf(I))!mmolC/m3/d
+
+               DTM (I, 1, 33) = FLUXCO2 / 86400.0 !mmolC/m3/sec
+               !DICGAS(I,1) = FLUXCO2  !DIC flux from air-sea gas exchange, snapshot   !mmolC/m3/day
+               DICGAS (I, 1) = DICGAS (I, 1) + FLUXCO2 !DIC flux from air-sea gas exchange, accumulated
+
+               DTM (I, 1, 27) = KRDO / (D(I)*DZ(1)) * (DOS-DOXG(I, 1)) &
+                  & / 86400.
             End Do
-!
+
          End If
-!
-!!!UPDATE TDIC AND DO FIELDS:
-     !
-     !***** Horizontal diffusion
-     !
+         !
+         !!!UPDATE TDIC AND DO FIELDS:
+         !
+         !***** Horizontal diffusion
+         !
          If (XY_DIFFUSION .And. XYDF < 0.0) Call VISCOF_H
 
-!
-!Uncommen VERTVL below if needed
-!      CALL VERTVL  !
-!
+         !
+         !Uncomment VERTVL below if needed
+         !CALL VERTVL
+         !
 !#if defined (WET_DRY)
-!		IF(WET_DRY_ON) CALL WD_UPDATE(2) !update wet_dry if DTFA is changed by VERTVL above
+!	        IF(WET_DRY_ON) CALL WD_UPDATE(2) !update wet_dry if DTFA is changed by VERTVL above
 !#endif
 
          Call EXCHANGE_WQM (C2)
@@ -1140,13 +1133,13 @@ Program FVCOMICM
             Do I = 1, MLOC
                Do K = 1, KBM1
 #  if !defined (WET_DRY)
-				  IF(D(I) > 0.0_SP)THEN
+                  IF(D(I) > 0.0_SP)THEN
 #  else
-				  IF(ISWETN(I) == 1)THEN
+                  IF(ISWETN(I) == 1)THEN
 #  endif
-					C2F (I, K, II) = C2F (I, K, II) + DTM (I, K, II) * &
-                 & DLT
-				  ENDIF
+                     C2F (I, K, II) = C2F (I, K, II) + DTM (I, K, II) * &
+                            & DLT
+                  ENDIF
                   C2F (I, K, II) = Max (C2F(I, K, II), 0.0)
                   If (II .Eq. 4 .Or. II .Eq. 5 .Or. II .Eq. 6) Then
                      C2F (I, K, II) = Max (C2F(I, K, II), 0.003)!make sure there are seeds for ALG1,2 and 3
@@ -1155,29 +1148,29 @@ Program FVCOMICM
             End Do
          End Do
          Call VDIF_WQM (C2F)!calculates VDIFFLUX (vert diff)
-         Call BCOND_WQM !Boundary Conditions            !
+         Call BCOND_WQM !Boundary Conditions
 
-     ! because boundary condition code does NOT know about the buffer regions
+         ! because boundary condition code does NOT know about the buffer regions
          Call EXCHANGE_WQM (C2F)!Interprocessor Exchange
          C2 = C2F
          ET = EL
          DT = D
-     !
-     !-------------------------------------------------------------------------------
-     !******* pH and pCO2 were calculated with TDIC and TALK before advection and diffusion.
-     !        Therefore, to keep pH and pCO2 up to the current time, we need to call
-     !        calc_pH_pCO2 again - but only if we are saving pH and pCO2 in the output
+         !
+         !-------------------------------------------------------------------------------
+         !******* pH and pCO2 were calculated with TDIC and TALK before advection and diffusion.
+         !        Therefore, to keep pH and pCO2 up to the current time, we need to call
+         !        calc_pH_pCO2 again - but only if we are saving pH and pCO2 in the output
          If (CARBONATE_CALC) Then
             Call CALC_PH_PCO2 !(pH,pCO2)
          End If
-     !-------------------------------------------------------------------------------
-!
+         !-------------------------------------------------------------------------------
+
 !ONLY_AIRSEA
 #endif
 
-     !
-     !******* Update time related variables
-     !
+         !
+         !******* Update time related variables
+         !
          NIT = NIT + 1
          ELTMS = ELTMS + DLT
          DLTAV = ELTMS / NIT
@@ -1186,14 +1179,15 @@ Program FVCOMICM
 
 
 #if defined (WET_DRY)
-		 IF(WET_DRY_ON)CALL WD_UPDATE(3) !recycle the wet dry information to previous time step
+         IF(WET_DRY_ON)CALL WD_UPDATE(3) !recycle the wet dry information to previous time step
 #endif
 
+         ! BR FIXME remove
          If (JDAY .Ge. TMEND) END_RUN = .True.
 
 #if defined(MULTIPROCESSOR)
          If (PAR) Then
-			!Check and make sure all procs end the run at the same time
+            !Check and make sure all procs end the run at the same time
             If (MSR) Then !Master receive END_RUN from each child
                Do I = 2, NPROCS
                   IRCVTAG = I + 1000
@@ -1208,14 +1202,14 @@ Program FVCOMICM
               & MPI_COMM_WORLD, IERR)
             End If
          End If
-     !
+
 #endif
-     !
+
          If (MSR) Then
             If (END_RUN) WRITE (*,*) 'MYID =', MYID, 'END_RUN=', &
            & END_RUN !master print its own END_RUN
          End If
-     !
+
          If (JDAY >= DLTD(DLTDP+1)) Then
             DLTDP = DLTDP + 1
             If ( .Not. AUTO_STEPPING) DLT = DLTVAL (DLTDP)
@@ -1224,13 +1218,13 @@ Program FVCOMICM
          End If
 
 
-     !
-     !******* Mass balance
-     !
+         !
+         !******* Mass balance
+         !
          If (MASS_BALANCE) Then
-        !
-        !       *** Water column constituent mass
-        !
+            !
+            !       *** Water column constituent mass
+            !
             Do JCON = 1, NAC
                II = AC (JCON)
                CMASS (II) = 0.0
@@ -1241,115 +1235,115 @@ Program FVCOMICM
                   End Do
                End Do
             End Do
-        !
-        !********* Water column nutrient mass
-        !
+            !
+            !********* Water column nutrient mass
+            !
             WCMN = ANC1 * CMASS (4) + ANC2 * CMASS (5) + ANC3 * CMASS &
-           & (6) + ANCSZ * CMASS (7) + ANCLZ * CMASS (8) + CMASS (13) + &
-           & CMASS (14) + CMASS (15) + CMASS (16) + CMASS (17) + CMASS &
-           & (18) + CMASS (19)
+               & (6) + ANCSZ * CMASS (7) + ANCLZ * CMASS (8) + CMASS (13) + &
+               & CMASS (14) + CMASS (15) + CMASS (16) + CMASS (17) + CMASS &
+               & (18) + CMASS (19)
             WCMP = APCSZ * CMASS (7) + APCLZ * CMASS (8) + CMASS (20) + &
-           & CMASS (21) + CMASS (22) + CMASS (23) + CMASS (24) + CMASS &
-           & (25) + CMASS (30) + CMASS (31) + CMASS (32)
+               & CMASS (21) + CMASS (22) + CMASS (23) + CMASS (24) + CMASS &
+               & (25) + CMASS (30) + CMASS (31) + CMASS (32)
             WCMC = CMASS (4) + CMASS (5) + CMASS (6) + CMASS (7) + &
-           & CMASS (8) + CMASS (9) + CMASS (10) + CMASS (11) + CMASS &
-           & (12)
+               & CMASS (8) + CMASS (9) + CMASS (10) + CMASS (11) + CMASS &
+               & (12)
             WCMS = ASC1 * CMASS (4) + ASC2 * CMASS (5) + ASC3 * CMASS &
-           & (6) + CMASS (28) + CMASS (29)
-        !
-        !********* Change in water column nutrient mass
-        !
+               & (6) + CMASS (28) + CMASS (29)
+            !
+            !********* Change in water column nutrient mass
+            !
             DLWCMN = WCMN - IWCMN
             DLWCMP = WCMP - IWCMP
             DLWCMC = WCMC - IWCMC
-        !
-        !********* Atmospheric loadings during DLT time
-        !
+            !
+            !********* Atmospheric loadings during DLT time
+            !
             ATMFLXN = ATMFLXN + (ATMNH4+ATMNO3+ATMLDON+ATMRDON) * &
-           & PRECIP * SFATOT / 1000. * DLT
-        !unit is (gN/m^3)* (m/sec) * (m^2)/1000 * (sec)
-        !==> gN/sec*sec/1000 ==kgN
+               & PRECIP * SFATOT / 1000. * DLT
+            !unit is (gN/m^3)* (m/sec) * (m^2)/1000 * (sec)
+            !==> gN/sec*sec/1000 ==kgN
             ATMFLXP = ATMFLXP + (ATMPO4+ATMLDOP+ATMRDOP) * PRECIP * &
-           & SFATOT / 1000. * DLT
+               & SFATOT / 1000. * DLT
             TM1 = .001 * DLT * PRECIP
-        !
+
             Do SB = 1, MLOC
                ATMFLXNB (SB) = ATMFLXNB (SB) + &
-              & (ATMNH4+ATMNO3+ATMLDON+ATMRDON) * ART1 (SB) * TM1
-           !
-           !unit of ATMFLXNB here is:
-           !   gN/m^3 * (m^2) * (sec) * (m/sec) /1000
-           !== gN/1000 = kgN
-           !
+                  & (ATMNH4+ATMNO3+ATMLDON+ATMRDON) * ART1 (SB) * TM1
+               !
+               !unit of ATMFLXNB here is:
+               !   gN/m^3 * (m^2) * (sec) * (m/sec) /1000
+               !== gN/1000 = kgN
+               !
                ATMFLXPB (SB) = ATMFLXPB (SB) + (ATMPO4+ATMLDOP+ATMRDOP) &
-              & * ART1 (SB) * TM1
+                  & * ART1 (SB) * TM1
             End Do
-        !
-        !       *** Benthic transfers
-        !
+            !
+            !       *** Benthic transfers
+            !
             TM1 = DLT / 86400000.
             Do BB = 1, MLOC
-           !
+
                TM2 = PNFWS (BB) * ART1 (BB) * TM1 ! unit
-           !unit of TM2 is (gN/m^2/day)* (m^2) * (sec)/86400 /1000
-           ! ==>  gN /day * day /1000 = kgN in DLT (sec) time)
-           !
+               !unit of TM2 is (gN/m^2/day)* (m^2) * (sec)/86400 /1000
+               ! ==>  gN /day * day /1000 = kgN in DLT (sec) time)
+               !
                BENFLXPN = BENFLXPN + TM2
                BENFLXPNB (BB) = BENFLXPNB (BB) + TM2
-           !
+
                TM2 = (BENNH4(BB)+BENNO3(BB)) * ART1 (BB) * TM1
-           !unit of TM2 is (gN/m^2/day)*(m^2)* (sec)/86400/1000 = kgN
+               !unit of TM2 is (gN/m^2/day)*(m^2)* (sec)/86400/1000 = kgN
                BENFLXDN = BENFLXDN + TM2
                BENFLXDNB (BB) = BENFLXDNB (BB) + TM2
-           !
+
                TM2 = PPFWS (BB) * ART1 (BB) * TM1
                BENFLXPP = BENFLXPP + TM2
                BENFLXPPB (BB) = BENFLXPPB (BB) + TM2
-           !
+
                TM2 = BENPO4 (BB) * ART1 (BB) * TM1
                BENFLXDP = BENFLXDP + TM2
                BENFLXDPB (BB) = BENFLXDPB (BB) + TM2
-           !
+
                TM2 = PCFWS (BB) * ART1 (BB) * TM1
                BENFLXPC = BENFLXPC + TM2
                BENFLXPCB (BB) = BENFLXPCB (BB) + TM2
             End Do
-        !
-        !       *** Change in nutrient mass due to kinetics
-        !
+            !
+            !       *** Change in nutrient mass due to kinetics
+            !
             TM1 = ANDC * DLT / 86400000.
             TM2 = DLT / 86400000.
             Do K = 1, KBM1
                Do I = 1, MLOC
                   DTMP1 = DENIT (I, K) * ART1 (I) * D (I) * DZ2D (I,K) * &
-                 & TM1
+                     & TM1
                   DLWCKMNB (I, K) = DLWCKMNB (I, K) - DTMP1
                   DLWCKMN = DLWCKMN - DTMP1
-              !: need to check DENIT and DDLALGC etc units to make sure
-              !consistent
+                  !: need to check DENIT and DDLALGC etc units to make sure
+                  !consistent
                   DTMP1 = (DLALGC(I, K)-RESPC(I, K)-MNLLDOC(I, &
-                 & K)-MNLRDOC(I, K)-DENIT(I, K)) * ART1 (I) * D (I) * &
-                 & DZ2D (I,K) * TM2
+                     & K)-MNLRDOC(I, K)-DENIT(I, K)) * ART1 (I) * D (I) * &
+                     & DZ2D (I,K) * TM2
                   DLWCKMCB (I, K) = DLWCKMCB (I, K) + DTMP1
                   DLWCKMC = DLWCKMC + DTMP1
                End Do
             End Do
-        !
-        !       *** Boundary fluxes
-        !
+            !
+            !       *** Boundary fluxes
+            !
             Do JCB = 1, INFLOW
                F = IFLOWP (JCB)
                BNDN = FLXTNH4 (F) + FLXTNO3 (F) + FLXTLDON (F) + &
-              & FLXTRDON (F) + FLXTLPON (F) + FLXTRPON (F) + ANC1 * &
-              & FLXT1 (F) + ANC2 * FLXT2 (F) + ANC3 * FLXT3 (F) + ANCSZ &
-              & * FLXTSZ (F) + ANCLZ * FLXTLZ (F)
+                  & FLXTRDON (F) + FLXTLPON (F) + FLXTRPON (F) + ANC1 * &
+                  & FLXT1 (F) + ANC2 * FLXT2 (F) + ANC3 * FLXT3 (F) + ANCSZ &
+                  & * FLXTSZ (F) + ANCLZ * FLXTLZ (F)
                BNDP = FLXTPO4 (F) + FLXTLDOP (F) + FLXTRDOP (F) + &
-              & FLXTLPOP (F) + FLXTRPOP (F) + APCSZ * FLXTSZ (F) + &
-              & APCLZ * FLXTLZ (F) + FLXTPIB1 (F) + FLXTPIB2 (F) + &
-              & FLXTPIB3 (F)
+                  & FLXTLPOP (F) + FLXTRPOP (F) + APCSZ * FLXTSZ (F) + &
+                  & APCLZ * FLXTLZ (F) + FLXTPIB1 (F) + FLXTPIB2 (F) + &
+                  & FLXTPIB3 (F)
                BNDC = FLXTLDOC (F) + FLXTRDOC (F) + FLXTLPOC (F) + &
-              & FLXTRPOC (F) + FLXT1 (F) + FLXT2 (F) + FLXT3 (F) + &
-              & FLXTSZ (F) + FLXTLZ (F)
+                  & FLXTRPOC (F) + FLXT1 (F) + FLXT2 (F) + FLXT3 (F) + &
+                  & FLXTSZ (F) + FLXTLZ (F)
                If (LEFT_FLOWB(F)) Then
                   BNDFLXN = BNDFLXN + BNDN
                   BNDFLXP = BNDFLXP + BNDP
@@ -1360,97 +1354,93 @@ Program FVCOMICM
                   BNDFLXC = BNDFLXC - BNDC
                End If
             End Do
-        !
-        !       *** Water column mass balance % error
-        !
+            !
+            !       *** Water column mass balance % error
+            !
             DLWCSSMN = BNDFLXN + BENFLXPN + BENFLXDN + S1FLXN + S2FLXN &
-           & + S3FLXN + ATMFLXN + DLWCKMN
+               & + S3FLXN + ATMFLXN + DLWCKMN
             DLWCSSMP = BNDFLXP + BENFLXPP + BENFLXDP + S1FLXP + S2FLXP &
-           & + S3FLXP + ATMFLXP
+               & + S3FLXP + ATMFLXP
             DLWCSSMC = BNDFLXC + BENFLXPC + S1FLXC + S2FLXC + S3FLXC + &
-           & DLWCKMC
-        !
+               & DLWCKMC
+
             ERRWCN = 0.0
             ERRWCP = 0.0
             ERRWCC = 0.0
             If (DLWCMN /= 0.0) ERRWCN = (DLWCMN-DLWCSSMN) / DLWCMN * &
-           & 100.
+               & 100.
             If (DLWCMP /= 0.0) ERRWCP = (DLWCMP-DLWCSSMP) / DLWCMP * &
-           & 100.
+               & 100.
             If (DLWCMC /= 0.0) ERRWCC = (DLWCMC-DLWCSSMC) / DLWCMC * &
-           & 100.
-        !
-        !       *** Change in sediment concentration due to burial and kinetics
-        !
+               & 100.
+            !
+            !       *** Change in sediment concentration due to burial and kinetics
+            !
             DTMP1 = DLTS / 1.E6
             DTMP2 = DLTS / 1.E3
             Do BB = 1, MLOC
-           !
+
                DFTMP = DTMP1 * ART1 (BB)!
-           !
+
                BURIALFLXCB (BB) = BURIALFLXCB (BB) - BURIALC (BB) * &
-              & DFTMP !kgC
+                  & DFTMP !kgC
                BURIALFLXNB (BB) = BURIALFLXNB (BB) - BURIALN (BB) * &
-              & DFTMP !(mgN/m^2/d) * d  * m^2 /1000/1000 mgN/1000/1000= gN/1000=kgN
+                  & DFTMP !(mgN/m^2/d) * d  * m^2 /1000/1000 mgN/1000/1000= gN/1000=kgN
                BURIALFLXPB (BB) = BURIALFLXPB (BB) - BURIALP (BB) * &
-              & DFTMP !kgP
-           !
+                  & DFTMP !kgP
+
                BURIALFLXC = BURIALFLXC - BURIALC (BB) * DFTMP !kgC
                BURIALFLXN = BURIALFLXN - BURIALN (BB) * DFTMP !kgN
                BURIALFLXP = BURIALFLXP - BURIALP (BB) * DFTMP !kgP
-           !
-           !
+
                DFTMP = DTMP2 * ART1 (BB)
-           !
+
                DLSEDKCB (BB) = DLSEDKCB (BB) - DIAGENC (BB) * DFTMP !kgC
                DLSEDKNB (BB) = DLSEDKNB (BB) - BENDEN (BB) * DFTMP !kgN
-           !Unit of DLSEDKN  is BENDEN * DTMP2* ART1
-           ! ==> BENDEN *  (day/1000) * m^2
-           ! ==> where  BENDEN(I)  =
-           !                         (XAPP1NO3*XAPP1NO3*NO31/S+XK2NO3*NO32)/1000.
-           !     has unit (m/day) * (mgN/m^3) /1000 == gN/m^2/day
-           ! ==> DLSEDKN has unit  (gN/m^2/day) *(day) * m^2/1000 == kgN
-           !
+               !Unit of DLSEDKN  is BENDEN * DTMP2* ART1
+               ! ==> BENDEN *  (day/1000) * m^2
+               ! ==> where  BENDEN(I)  =
+               !                         (XAPP1NO3*XAPP1NO3*NO31/S+XK2NO3*NO32)/1000.
+               !     has unit (m/day) * (mgN/m^3) /1000 == gN/m^2/day
+               ! ==> DLSEDKN has unit  (gN/m^2/day) *(day) * m^2/1000 == kgN
+               !
                DLSEDKC = DLSEDKC - DIAGENC (BB) * DFTMP !kgC
                DLSEDKN = DLSEDKN - BENDEN (BB) * DFTMP !kgN
-           !
+
             End Do
-        !
-        !********* Sediment mass balance change in DLTS time time
-        !
+            !
+            !********* Sediment mass balance change in DLTS time time
+            !
             DLSEDMN = SEDMN - ISEDMN
             DLSEDMP = SEDMP - ISEDMP
             DLSEDMC = SEDMC - ISEDMC
-        !
+
             DLSEDSSMN = BURIALFLXN + DLSEDKN - BENFLXPN - BENFLXDN
             DLSEDSSMP = BURIALFLXP - BENFLXPP - BENFLXDP
             DLSEDSSMC = BURIALFLXC + DLSEDKC - BENFLXPC
-        !
-        !         *** Sediment mass balance % error
-        !
+            !
+            !         *** Sediment mass balance % error
+            !
             If (SEDIMENT_CALC) Then
                ERRSEDN = 0.0
                ERRSEDP = 0.0
                ERRSEDC = 0.0
                If (DLSEDMN /= 0.0) ERRSEDN = (DLSEDMN-DLSEDSSMN) / &
-              & DLSEDMN * 100.
+                  & DLSEDMN * 100.
                If (DLSEDMP /= 0.0) ERRSEDP = (DLSEDMP-DLSEDSSMP) / &
-              & DLSEDMP * 100.
+                  & DLSEDMP * 100.
                If (DLSEDMC /= 0.0) ERRSEDC = (DLSEDMC-DLSEDSSMC) / &
-              & DLSEDMC * 100.
+                  & DLSEDMC * 100.
             End If
          End If !END MASS_BALANCE
 
-!
          Do I = 1, NTLOC
             DT1 (I) = DT (NV(I, 1)) + DT (NV(I, 2)) + DT (NV(I, 3))
             DT1 (I) = DT1 (I) / 3.0
          End Do
-     !
-     !
-     !     T(:,:)    = C2(:,:,1)
-     !     SALT(:,:) = C2(:,:,2)
-!
+         !
+         !     T(:,:)    = C2(:,:,1)
+         !     SALT(:,:) = C2(:,:,2)
          SSI (:, :) = C2 (:, :, 3)
          CALL DebugNan(MTLOC,KBM1,3,SSI)
          B1 (:, :) = C2 (:, :, 4)
@@ -1520,103 +1510,103 @@ Program FVCOMICM
 !--NETCDF OUTPUT---------------------------------------------------------------!
 !
 #if defined (OUTPUT_NETCDF)
-		IF(CDF_INT /= 0 .AND. CDF_OUT)THEN
-			IF(MOD(IINT,CDF_INT)==0) CALL out_netcdf_data(IREPORT)
-		ENDIF
+         IF(CDF_INT /= 0 .AND. CDF_OUT)THEN
+            IF(MOD(IINT,CDF_INT)==0) CALL out_netcdf_data(IREPORT)
+         ENDIF
 #endif
          Call WQM_OUTPUT (NTHIS_OLD, NTSTN_OLD, NTHIS, NTSTN, CTR_HIS, &
-        & CTR_STN)
+            & CTR_STN)
 
-     !
-     !
-     !******* Restarts
-     !
-     !
-     ! KURT GLAESEMANN - restarts
+         !
+         !
+         !******* Restarts
+         !
+         !
+         ! KURT GLAESEMANN - restarts
          If (RESTART_OUT) Then
 
             If (JDAY >= RSOD(RSODP) .Or. END_RUN) Then
            
 # if defined (MULTIPROCESSOR)
                If (PAR) Then
-              !
+
                   Do J = 1, NCP
                      Call GATHER (0, MTLOC, MLOC, MGL, KBM1, MYID, &
-                    & NPROCS, NMAP, C2(0, 1, J), C2_GL(1, 1, J))
+                        & NPROCS, NMAP, C2(0, 1, J), C2_GL(1, 1, J))
                   End Do
 
                   If (SEDIMENT_CALC) Then
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, CTEMP, CTEMP_GL)
+                        & NMAP, CTEMP, CTEMP_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 3, MYID, NPROCS, &
-                    & NMAP, CPOP, CPOP_GL)
+                        & NMAP, CPOP, CPOP_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 3, MYID, NPROCS, &
-                    & NMAP, CPON, CPON_GL)
+                        & NMAP, CPON, CPON_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 3, MYID, NPROCS, &
-                    & NMAP, CPOC, CPOC_GL)
+                        & NMAP, CPOC, CPOC_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, CPOS, CPOS_GL)
+                        & NMAP, CPOS, CPOS_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, PO4T2TM1S, PO4T2TM1S_GL)
+                        & NMAP, PO4T2TM1S, PO4T2TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, NH4T2TM1S, NH4T2TM1S_GL)
+                        & NMAP, NH4T2TM1S, NH4T2TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, NO3T2TM1S, NO3T2TM1S_GL)
+                        & NMAP, NO3T2TM1S, NO3T2TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, HST2TM1S, HST2TM1S_GL)
+                        & NMAP, HST2TM1S, HST2TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, CH4T2TM1S, CH4T2TM1S_GL)
+                        & NMAP, CH4T2TM1S, CH4T2TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, CH41TM1S, CH41TM1S_GL)
+                        & NMAP, CH41TM1S, CH41TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, SO4T2TM1S, SO4T2TM1S_GL)
+                        & NMAP, SO4T2TM1S, SO4T2TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, SIT2TM1S, SIT2TM1S_GL)
+                        & NMAP, SIT2TM1S, SIT2TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, BENSTRTM1S, BENSTRTM1S_GL)
-                 !call gather(1,MTLOC,MLOC,MGL,1,MYID,NPROCS,NMAP,SODTM1S, SODTM1S_GL)
-                 !
-                 !: save other sediment variables needed for restarts
+                        & NMAP, BENSTRTM1S, BENSTRTM1S_GL)
+                     !call gather(1,MTLOC,MLOC,MGL,1,MYID,NPROCS,NMAP,SODTM1S, SODTM1S_GL)
+                     !
+                     !: save other sediment variables needed for restarts
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, PO41TM1S, PO41TM1S_GL)
+                        & NMAP, PO41TM1S, PO41TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, NH41TM1S, NH41TM1S_GL)
+                        & NMAP, NH41TM1S, NH41TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, NO31TM1S, NO31TM1S_GL)
+                        & NMAP, NO31TM1S, NO31TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, HS1TM1S, HS1TM1S_GL)
+                        & NMAP, HS1TM1S, HS1TM1S_GL)
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, SI1TM1S, SI1TM1S_GL)
-                 !
+                        & NMAP, SI1TM1S, SI1TM1S_GL)
+
                      If (BALGAE_CALC) Then
                         Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, &
-                       & NPROCS, NMAP, BBM, BBM_GL)
+                           & NPROCS, NMAP, BBM, BBM_GL)
                      End If
-                 !
-					 If (SAV_CALC) Then
-                        Call GATHER (1, MTLOC, MLOC, MGL, NSAVM, MYID, &
-                       & NPROCS, NMAP, LEAF, LEAF_GL)
-					    Call GATHER (1, MTLOC, MLOC, MGL, NSAVM, MYID, &
-                       & NPROCS, NMAP, STEM, STEM_GL)
-					    Call GATHER (1, MTLOC, MLOC, MGL, NSAVM, MYID, &
-                       & NPROCS, NMAP, ROOT, ROOT_GL)
-					    Call GATHER (1, MTLOC, MLOC, MGL, NSAVM, MYID, &
-                       & NPROCS, NMAP, TUBER, TUBER_GL)
-					    Call GATHER (1, MTLOC, MLOC, MGL, NSAVM, MYID, &
-                       & NPROCS, NMAP, EP, EP_GL)
+
+                  If (SAV_CALC) Then
+                     Call GATHER (1, MTLOC, MLOC, MGL, NSAVM, MYID, &
+                        & NPROCS, NMAP, LEAF, LEAF_GL)
+                     Call GATHER (1, MTLOC, MLOC, MGL, NSAVM, MYID, &
+                        & NPROCS, NMAP, STEM, STEM_GL)
+                     Call GATHER (1, MTLOC, MLOC, MGL, NSAVM, MYID, &
+                        & NPROCS, NMAP, ROOT, ROOT_GL)
+                     Call GATHER (1, MTLOC, MLOC, MGL, NSAVM, MYID, &
+                        & NPROCS, NMAP, TUBER, TUBER_GL)
+                     Call GATHER (1, MTLOC, MLOC, MGL, NSAVM, MYID, &
+                        & NPROCS, NMAP, EP, EP_GL)
                      End If
-				  !
+
                   End If
 
                   If (DFEEDER) Then
                      Call GATHER (1, MTLOC, MLOC, MGL, 1, MYID, NPROCS, &
-                    & NMAP, DFEEDM1S, DFEEDM1S_GL)
+                        & NMAP, DFEEDM1S, DFEEDM1S_GL)
                   End If
                   If (SFEEDER) Then
                      Call GATHER (1, MTLOC, MLOC, MGL, NSSFP, MYID, &
-                    & NPROCS, NMAP, SFEED, SFEED_GL)
+                        & NPROCS, NMAP, SFEED, SFEED_GL)
                   End If
-              !
+
                Else
 #endif
                   Do J = 1, NCP
@@ -1637,35 +1627,35 @@ Program FVCOMICM
                      SO4T2TM1S_GL (1:MGL) = SO4T2TM1S (1:MGL)
                      SIT2TM1S_GL (1:MGL) = SIT2TM1S (1:MGL)
                      BENSTRTM1S_GL (1:MGL) = BENSTRTM1S (1:MGL)
-                 !SODTM1S_GL(1:MGL)     = SODTM1S(1:MGL)
-                 !
-                 !: save other sediment variables needed for restarts
+                     !SODTM1S_GL(1:MGL)     = SODTM1S(1:MGL)
+                     !
+                     !: save other sediment variables needed for restarts
                      PO41TM1S_GL (1:MGL) = PO41TM1S (1:MGL)
                      NH41TM1S_GL (1:MGL) = NH41TM1S (1:MGL)
                      NO31TM1S_GL (1:MGL) = NO31TM1S (1:MGL)
                      HS1TM1S_GL (1:MGL) = HS1TM1S (1:MGL)
                      SI1TM1S_GL (1:MGL) = SI1TM1S (1:MGL)
-                 !
-                 !changed below for consistency 
+                     !
+                     !changed below for consistency 
                      If (BALGAE_CALC) Then
                         BBM_GL (1:MGL) = BBM (1:MGL)
                      End If
-                 !
-					 If (SAV_CALC) Then ! SAV
+
+                     If (SAV_CALC) Then ! SAV
                         LEAF_GL (1:MGL, 1:NSAVM) = LEAF (1:MGL, 1:NSAVM)
-						STEM_GL (1:MGL, 1:NSAVM) = STEM (1:MGL, 1:NSAVM)
-						ROOT_GL (1:MGL, 1:NSAVM) = ROOT (1:MGL, 1:NSAVM)
-						TUBER_GL (1:MGL, 1:NSAVM) = TUBER (1:MGL, 1:NSAVM)
-						EP_GL (1:MGL, 1:NSAVM) = EP (1:MGL, 1:NSAVM)
+                        STEM_GL (1:MGL, 1:NSAVM) = STEM (1:MGL, 1:NSAVM)
+                        ROOT_GL (1:MGL, 1:NSAVM) = ROOT (1:MGL, 1:NSAVM)
+                        TUBER_GL (1:MGL, 1:NSAVM) = TUBER (1:MGL, 1:NSAVM)
+                        EP_GL (1:MGL, 1:NSAVM) = EP (1:MGL, 1:NSAVM)
                      End If
-				 !
+
                   End If
                   If (DFEEDER) Then
                      DFEEDM1S_GL (1:MGL) = DFEEDM1S (1:MGL)
                   End If
                   If (SFEEDER) Then
                      SFEED_GL (1:MGL, 1:NSPECIES) = SFEED (1:MGL, &
-                    & 1:NSPECIES)
+                        & 1:NSPECIES)
                   End If
 # if defined (MULTIPROCESSOR)
                End If
@@ -1687,62 +1677,60 @@ Program FVCOMICM
                      Write (EXT4, '(I4)') IJDAY
                      FILENAME = RSOFN (1:LENGTH) // EXT4
                   End If
-              !
+
                   Open (RSO, File=FILENAME, Form='UNFORMATTED')
                   Write (RSO) TITLE
                   Write (RSO) (((C2_GL(I, K, J), I=1, MGL), K=1, KBM1), &
                  & J=1, NCP)
-              !
+
                   If (SEDIMENT_CALC) Then
-                 !
+
                      Write (RSO) (CTEMP_GL(B), B=1, MGL), ((CPOP_GL(B, &
-                    & J), B=1, MGL), J=1, 3), ((CPON_GL(B, J), B=1, &
-                    & MGL), J=1, 3), ((CPOC_GL(B, J), B=1, MGL), J=1, &
-                    & 3), (CPOS_GL(B), B=1, MGL), (PO4T2TM1S_GL(B), &
-                    & B=1, MGL), (NH4T2TM1S_GL(B), B=1, MGL), &
-                    & (NO3T2TM1S_GL(B), B=1, MGL), (HST2TM1S_GL(B), &
-                    & B=1, MGL), (CH4T2TM1S_GL(B), B=1, MGL), &
-                    & (CH41TM1S_GL(B), B=1, MGL), (SO4T2TM1S_GL(B), &
-                    & B=1, MGL), (SIT2TM1S_GL(B), B=1, MGL), &
-                    & (BENSTRTM1S_GL(B), B=1, MGL), (SODTM1S_GL(B), &
-                    & B=1, MGL), (PO41TM1S_GL(B), B=1, MGL), &
-                    & (NH41TM1S_GL(B), B=1, MGL), (NO31TM1S_GL(B), B=1, &
-                    & MGL), (HS1TM1S_GL(B), B=1, MGL), (SI1TM1S_GL(B), &
-                    & B=1, MGL)
-                 !
+                        & J), B=1, MGL), J=1, 3), ((CPON_GL(B, J), B=1, &
+                        & MGL), J=1, 3), ((CPOC_GL(B, J), B=1, MGL), J=1, &
+                        & 3), (CPOS_GL(B), B=1, MGL), (PO4T2TM1S_GL(B), &
+                        & B=1, MGL), (NH4T2TM1S_GL(B), B=1, MGL), &
+                        & (NO3T2TM1S_GL(B), B=1, MGL), (HST2TM1S_GL(B), &
+                        & B=1, MGL), (CH4T2TM1S_GL(B), B=1, MGL), &
+                        & (CH41TM1S_GL(B), B=1, MGL), (SO4T2TM1S_GL(B), &
+                        & B=1, MGL), (SIT2TM1S_GL(B), B=1, MGL), &
+                        & (BENSTRTM1S_GL(B), B=1, MGL), (SODTM1S_GL(B), &
+                        & B=1, MGL), (PO41TM1S_GL(B), B=1, MGL), &
+                        & (NH41TM1S_GL(B), B=1, MGL), (NO31TM1S_GL(B), B=1, &
+                        & MGL), (HS1TM1S_GL(B), B=1, MGL), (SI1TM1S_GL(B), &
+                        & B=1, MGL)
+
                      If (BALGAE_CALC) Then
                         Write (RSO) (BBM_GL(B), B=1, MGL)
                      End If
 
-					 If (SAV_CALC) Then
+                     If (SAV_CALC) Then
                         Write (RSO) ((LEAF_GL(B,K), B=1, MGL),K=1,NSAVM), &
-					   &((STEM_GL(B,K), B=1, MGL),K=1,NSAVM), &
-					   &((ROOT_GL(B,K), B=1, MGL),K=1,NSAVM), &
-					   &((TUBER_GL(B,K), B=1, MGL),K=1,NSAVM), &
-					   &((EP_GL(B,K), B=1, MGL),K=1,NSAVM)
+                           &((STEM_GL(B,K), B=1, MGL),K=1,NSAVM), &
+                           &((ROOT_GL(B,K), B=1, MGL),K=1,NSAVM), &
+                           &((TUBER_GL(B,K), B=1, MGL),K=1,NSAVM), &
+                           &((EP_GL(B,K), B=1, MGL),K=1,NSAVM)
                      End If !SAV AN
                   End If
-              !
+
                   If (DFEEDER) WRITE (RSO) (DFEEDM1S_GL(B), B=1, MGL)
                   If (SFEEDER) WRITE (RSO) ((SFEED_GL(B, K), B=1, MGL), &
-                 & K=1, NSPECIES)
-              !
+                     & K=1, NSPECIES)
+
                   Close (RSO)
                End If
             End If
          End If !END RESTART_OUT
 
-
-
       End Do !END DO WHILE(.NOT.END_RUN)
-  !
-  !
-  !************************************************************************
-  !**                          End Simulation                            **
-  !************************************************************************
-  !
-  !Close station and history outputs if open
-  !
+      !
+      !
+      !************************************************************************
+      !**                          End Simulation                            **
+      !************************************************************************
+      !
+      !Close station and history outputs if open
+      !
       If (MSR) Then
          If (OPEN_HIS) Then
             Select Case (HISFN_SPLIT_BYLEVEL)
@@ -1756,16 +1744,16 @@ Program FVCOMICM
          End If
          If (OPEN_STN) CLOSE (UNIT_STN)
       End If
-  !
-  !
-  !***** Write results in binary form for use as initial conditions*****
-  !
+      !
+      !
+      !***** Write results in binary form for use as initial conditions*****
+      !
       If (ICOND_OUT) Then
-     !
-     !***** Integrate sediments G3 POM to steady state     			!
-     !
+         !
+         !***** Integrate sediments G3 POM to steady state     			!
+         !
          If (STEADY_STATE_SED_G3) Call SED_DIAGENESIS_G3
-     !
+
 # if defined (KILLTREES)
      !
      !  - only print to MSR
@@ -1794,11 +1782,11 @@ Program FVCOMICM
      !            End If
 # endif
       End If
-!
+
 #if defined (KILLTREES)
-  !
-  !***** Snapshot FORMAT statements
-  !
+      !
+      !***** Snapshot FORMAT statements
+      !
 3000  Format ('1')
 3010  Format (1 X, A72)
 3020  Format (/ / 1 X, 'Time related variables' / '+', 22 ('_') // 3 X, &
@@ -1851,16 +1839,16 @@ Program FVCOMICM
 5000  Format (10(1 X, 1 PE10.2E2))
 !
 #endif
-  !
+
       Call WQM_DEALLOC !Replaced the above section by WQM_DEALLOC
-  !
+
       Call ZOOP_DEALLOC !Replaced the above by ZOOP_DEALLOC()
-  !
+
       If (LIGHT_EXTINCTION) Call OWQ_DEALLOC !Replaced the above with OWQ_DEALLOC
       If (SAV_CALC) Then
          Call SAV_DEALLOC
       End If
-  !Deallocate SAV fluxes to water column if SAV_LOADS is on
+      !Deallocate SAV fluxes to water column if SAV_LOADS is on
       If (SAV_LOADS) Then
          Call SAV_LOADS_DEALLOC
       End If
@@ -1876,9 +1864,9 @@ Program FVCOMICM
       Call TGE_DEALLOC
 
 #if defined (WET_DRY)
-	  Call WD_DEALLOC
+      Call WD_DEALLOC
 #endif
-!
+
 
 #if defined (MULTIPROCESSOR)
       If (PAR) Then
@@ -1896,17 +1884,17 @@ Program FVCOMICM
             If (ALLOCATED(NC(I)%SNDP)) DEALLOCATE (NC(I)%SNDP)
          End Do
       End If
-!
+
       Call PAR_DEALLOC
 #endif
-  !
+
       If (SEDIMENT_CALC) Then
-     !Deallocating sediment diagenesis related variables
+         !Deallocating sediment diagenesis related variables
          Call SED_DEALLOC
-     !Deallocating benthic algae related variables
+         !Deallocating benthic algae related variables
          If (BALGAE_CALC) Call BA_DEALLOC
          If (SAV_CALC) Call SED_SAV_EXCHANGE_DEALLOC
-     !Deallocating deposition feeder related variables
+         !Deallocating deposition feeder related variables
          If (DFEEDER) Then
             Call DF_DEALLOC
             Call SED_DF_EXCHANGE_DEALLOC
@@ -1915,19 +1903,19 @@ Program FVCOMICM
             Call SED_SF_EXCHANGE_DEALLOC
          End If
       End If
-  !
-  !Report model time
-  !
+      !
+      !Report model time
+      !
       If (MSR) Then
          TOTAL_TIME = TOTAL_TIME + DTIME (ELAPSED)!CALL DTIME() and return user time in ELAPSED(1), system time in ELAPSED(2)
          WTIME_MOD = WTIME_MOD + ELAPSED (1)
          WTIME_SYS = WTIME_SYS + ELAPSED (2)
          Write (*, '(A22,EN15.3,A8)') "Time used by model   =", &
-        & WTIME_MOD, " seconds"
+            & WTIME_MOD, " seconds"
          Write (*, '(A22,EN15.3,A8)') "Time used by system  =", &
-        & WTIME_SYS, " seconds"
+            & WTIME_SYS, " seconds"
          Write (*, '(A22,EN15.3,A8)') "Total time used      =", &
-        & TOTAL_TIME, " seconds"
+            & TOTAL_TIME, " seconds"
       End If
 
       CALL PSTOP     !This does not stop the run properly
