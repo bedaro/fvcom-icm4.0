@@ -49,18 +49,23 @@ Module MOD_DIC_TALK
 	  USE MOD_WD, ONLY: ISWETN
 #endif
       Implicit None
+      Integer :: AIRSEA_OPTION !choice of parameterization to calculate O2 and CO2 air-sea exchange
+!
+      Real (SP), Dimension (2) :: JDstart1 !AN
+
 !
 Contains
-  !==============================================================================|
-  !    This file has the following subroutines:                                  !
-  !                                                                              !
-  !   PCO2AIR_READ_INITIAL: Read atmospheric pCO2 data (initial record)          !
-  !                and the choice of parameterization to compute air-sea         !
-  !                exchange of O2 and CO2                                        !
-  !   TOTINC      : Calculation of changes in TDIC (DTTIC)                       !
-  !   ALKALINE    : Calculation of changes in TALK (DTALK)                       !
-  !                                                                              !
-  !==============================================================================|
+     !=====================================================================|
+     !    This file has the following subroutines:
+     !
+     !   PCO2AIR_READ_INITIAL: Read atmospheric pCO2 data (initial record)
+     !                and the choice of parameterization to compute air-sea
+     !                exchange of O2 and CO2
+     !   GET_AIRSEA_METHOD: Determine what AIRSEA_OPTION should be used
+     !   TOTINC      : Calculation of changes in TDIC (DTTIC)
+     !   ALKALINE    : Calculation of changes in TALK (DTALK)
+     !
+     !=====================================================================|
 !
   !************************************************************************
   !**          S U B R O U T I N E   P C O 2 A I R _ R E A D             **
@@ -70,11 +75,10 @@ Contains
 !
          Use MOD_SIZES, Only: MGL
          Use MOD_CONTROL, Only: PAR, SERIAL
-		 USE MOD_FILEINFO, ONLY: AIRC
+         USE MOD_FILEINFO, ONLY: AIRC
 !
-         Use MOD_CO2SYS, Only: K0, FugFac, pCO2atm, AIRSEA_OPTION, &
-        & MAPCO2ATM, UNITCO2ATM, NXPCO2, pco2atmNX, &  
-		& JDstart1
+         Use MOD_CO2SYS, Only: K0, FugFac, pCO2atm, &
+            & MAPCO2ATM, UNITCO2ATM, NXPCO2, pco2atmNX
 
 #    if defined (MULTIPROCESSOR)
          Use MOD_PAR
@@ -90,7 +94,7 @@ Contains
 
          Read (AIRC, 1009) AIRSEA_OPTION
          If (MSR) write (*,*) 'Parameterization air-sea exchange: (1=re&
-        &areation, 2=W92, 3=N00, 4=Ho06, 5=W12, 6=PNNL)'
+        &aeration, 2=W92, 3=N00, 4=Ho06, 5=W12, 6=PNNL)'
          If (MSR) write (*,*) '  --> AIRSEA_OPTION=', AIRSEA_OPTION
 
          Read (AIRC, 1010) MAPCO2ATM
@@ -152,6 +156,27 @@ Contains
          Return
       End Subroutine PCO2AIR_READ_INITIAL
 !
+
+      Integer Function GET_AIRSEA_METHOD()
+        Use MOD_PREC, Only: SMOD
+        Use MOD_WQM, Only: JDAY
+
+        Real(SP) :: doy
+        Integer :: temp
+
+        If (AIRSEA_OPTION == 6) Then
+          doy = AINT(1.0 + SMOD (JDAY, 365.25_SP))
+			    If (doy <= JDstart1(1) .OR. doy >= JDstart1(2)) Then
+            temp = 1
+          Else
+            temp = 5
+          End If
+        Else
+          temp = AIRSEA_OPTION
+        End If
+        GET_AIRSEA_METHOD = temp
+      End Function GET_AIRSEA_METHOD
+
   !************************************************************************
   !**                 S U B R O U T I N E   T O T I N C                  **
   !************************************************************************
@@ -200,7 +225,6 @@ Contains
          FTCOD,           &!
          KHOCOD,          &
          BENTHIC_FLUXES,  &
-		 JDAY,            &
      & SAV_CALC,      & ! for SAV-DIC interaction
 #if defined(CSOD_CALC)
 		 CSODflux,        &
@@ -219,16 +243,15 @@ Contains
                               & B1LZ,B2LZ ! AN activates it for zoopl, added zooplankton predation
 !
          Use MOD_CO2SYS, Only: CO2star_sat, pCO2atm, CO2star_surf, &
-        & AIRSEA_OPTION, UNITCO2ATM, K0, FugFac, DICUPT, DICBMP, &
-        & DICPRD, DICMNL, DICDEN, DICGAS, DICSED, &         !DICNIT
-        & JDstart1
+        & UNITCO2ATM, K0, FugFac, DICUPT, DICBMP, &
+        & DICPRD, DICMNL, DICDEN, DICGAS, DICSED !DICNIT
 
          Use MOD_WQMINIT, Only: COD_CALC, ZOO_CALC 
          USE MOD_SAV, ONLY : BM_LEAF, LEAF, ACDWSAV,PLEAF,SAVCELL,NSAVCELL     !  added for SAV
 
          Implicit None
 !
-         Integer :: I, K, SAVID,II
+         Integer :: I, J, K, SAVID,II
 !
          Real (SP) :: CP1, CP2, FRDO1, FRDO2, DOR1, DOR2, DOP1, DOP2, &
         & CPCOD, CPSAV
@@ -242,6 +265,7 @@ Contains
 #elif defined(MASS_CALC)
          Real (SP) :: BENDIC !mmoleC/m^3/day
 #endif
+         Integer :: airsea_method
 !
          DTTIC = 0.0
 !
@@ -338,124 +362,85 @@ Contains
          End Do
 !
 !
-    !********  Atmospheric Exchange
-    ! Transform pCO2atm OR fCO2atm to CO2star_sat:  CO2star_sat = K0 * fCO2atm = K0 * pCO2atm * FugFac    [K0 units: mol/kg-SW/atm]
-         If (UNITCO2ATM == 'pCO2') Then !if we provided pCO2atm in microatm or ppmv
-            Do I = 1, MLOC
+        !********  Atmospheric Exchange
+        ! Transform pCO2atm OR fCO2atm to CO2star_sat:  CO2star_sat = K0 * fCO2atm = K0 * pCO2atm * FugFac    [K0 units: mol/kg-SW/atm]
+        If (UNITCO2ATM == 'pCO2') Then !if we provided pCO2atm in microatm or ppmv
+          Do I = 1, MLOC
 
-               CO2star_sat (I) = K0 (I, 1) * pCO2atm (I) * FugFac (I, &
+            CO2star_sat (I) = K0 (I, 1) * pCO2atm (I) * FugFac (I, &
               & 1) * RHO (I, 1) * 1.E-3_SP !mmol/m3
-            End Do
-         Else 
-            Do I = 1, MLOC
-               auxLB = K0 (I, 1) * pCO2atm (I) * RHO (I, 1) * 1.E-3_SP
+          End Do
+        Else
+          Do I = 1, MLOC
+            auxLB = K0 (I, 1) * pCO2atm (I) * RHO (I, 1) * 1.E-3_SP
                CO2star_sat (I) = auxLB
 
-            End Do
-         End If
+          End Do
+        End If
+        airsea_method = GET_AIRSEA_METHOD()
 
-         If (AIRSEA_OPTION == 1) Then 
-!
-            FACTOR = AREAR * (BREAR*WMS) ** CREAR
-            Do I = 1, MLOC
-               TDOS = T (I, 1)
-               RNU = 0.54 + 0.7 * TDOS / 30.0 - 0.07 * SALT (I, 1) / &
+        If (airsea_method == 1) Then 
+          FACTOR = AREAR * (BREAR*WMS) ** CREAR
+          Do I = 1, MLOC
+            TDOS = T (I, 1)
+            RNU = 0.54 + 0.7 * TDOS / 30.0 - 0.07 * SALT (I, 1) / &
               & 35.0
-			 ! KRDO      = 0.157*RNU*(1.5*WMS)**1.5
-               KRDO = FACTOR * RNU !up to here, same as in calculation of air-sea O2 fluxes (m/day)
-               KRCO2 = (32.0/44.0) ** 0.25 * KRDO !conversion of oxygen reareation into CO2 reareagion rate by Chapra (1997)
+			      ! KRDO      = 0.157*RNU*(1.5*WMS)**1.5
+            KRDO = FACTOR * RNU !up to here, same as in calculation of air-sea O2 fluxes (m/day)
+            KRCO2 = (32.0/44.0) ** 0.25 * KRDO !conversion of oxygen reareation into CO2 reareagion rate by Chapra (1997)
 
 #  if !defined (WET_DRY)
-				IF(D(I) > 0.0_SP)THEN
+				    IF(D(I) > 0.0_SP)THEN
 #  else
-				IF(ISWETN(I) == 1)THEN
+				    IF(ISWETN(I) == 1)THEN
 #  endif
-					FLUXCO2 = KRCO2 / (D(I)*DZ2D(I,1)) * &
-              & (CO2star_sat(I)-CO2star_surf(I))
+					    FLUXCO2 = KRCO2 / (D(I)*DZ2D(I,1)) * &
+                & (CO2star_sat(I)-CO2star_surf(I))
 
-				ELSE
-					FLUXCO2=0.0_SP
-				ENDIF
+				    ELSE
+					    FLUXCO2=0.0_SP
+				    ENDIF
 !
-               DTTIC (I, 1) = DTTIC (I, 1) + FLUXCO2 / 86400.0
+            DTTIC (I, 1) = DTTIC (I, 1) + FLUXCO2 / 86400.0
 
-               DICGAS (I, 1) = DICGAS (I, 1) + FLUXCO2 !TDIC flux from air-sea gas exchange, accumulated
-            End Do
+            DICGAS (I, 1) = DICGAS (I, 1) + FLUXCO2 !TDIC flux from air-sea gas exchange, accumulated
+          End Do
 !
-         !Else
-         Else If (AIRSEA_OPTION>1 .AND. AIRSEA_OPTION<=5) Then
+        Else
+          If (airsea_method == 2) Then !Wanninkhof (1992)
+            FACTOR = 0.31 * WMS ** 2.0 !0.31 for winds in steady staate;  0.39 for long-term averaged winds
+          Else If (airsea_method == 3) Then !Nightingale (2000)
+            FACTOR = (0.33*WMS+0.222*WMS**2.0)
+          Else If (airsea_method == 4) Then !Ho (2006)
+            FACTOR = 0.266 * WMS ** 2.0
+          Else If (airsea_method == 5) Then !Wanninkhof et al (2013): wind in equation is <U^2>,meaning the time mean of U^2
+            FACTOR = 0.251 * WMS ** 2.0 !over the time interval of flux determination (they compute monthly fluxes with 6hourly wind data)
+          End If
 !
-            If (AIRSEA_OPTION == 2) Then !Wanninkhof (1992)
-               FACTOR = 0.31 * WMS ** 2.0 !0.31 for winds in steady staate;  0.39 for long-term averaged winds
-            Else If (AIRSEA_OPTION == 3) Then !Nightingale (2000)
-               FACTOR = (0.33*WMS+0.222*WMS**2.0)
-            Else If (AIRSEA_OPTION == 4) Then !Ho (2006)
-               FACTOR = 0.266 * WMS ** 2.0
-            Else If (AIRSEA_OPTION == 5) Then !Wanninkhof et al (2013): wind in equation is <U^2>,meaning the time mean of U^2
-               FACTOR = 0.251 * WMS ** 2.0 !over the time interval of flux determination (they compute monthly fluxes with 6hourly wind data)
-
-            End If
-!
-            Do I = 1, MLOC
-               Sc = 2073.1 - 125.62 * T (I, 1) + 3.6276 * T (I, 1) ** &
+          Do I = 1, MLOC
+            Sc = 2073.1 - 125.62 * T (I, 1) + 3.6276 * T (I, 1) ** &
               & 2.0 - 0.043219 * T (I, 1) ** 3.0 !Schmidt number for CO2 (W92)
 
-               KRCO2 = FACTOR * Sqrt (660.0/Sc)!gas transfer velocity in cm/hr
-               KRCO2 = KRCO2 * 24.0 / 100.0 !m/day
+            KRCO2 = FACTOR * Sqrt (660.0/Sc)!gas transfer velocity in cm/hr
+            KRCO2 = KRCO2 * 24.0 / 100.0 !m/day
 
 #  if !defined (WET_DRY)
-				IF(D(I) > 0.0_SP)THEN
+            IF(D(I) > 0.0_SP)THEN
 #  else
-				IF(ISWETN(I) == 1)THEN
+            IF(ISWETN(I) == 1)THEN
 #  endif
 !
-					FLUXCO2 = KRCO2 / (D(I)*DZ2D(I,1)) * &
-              & (CO2star_sat(I)-CO2star_surf(I))!mmolC/m3/d
-				ELSE
-					FLUXCO2=0.0_SP
-				ENDIF
+              FLUXCO2 = KRCO2 / (D(I)*DZ2D(I,1)) * &
+                  & (CO2star_sat(I)-CO2star_surf(I))!mmolC/m3/d
+				    ELSE
+					    FLUXCO2=0.0_SP
+				    ENDIF
 !
-               DTTIC (I, 1) = DTTIC (I, 1) + FLUXCO2 / 86400.0 !mmolC/m3/sec
+            DTTIC (I, 1) = DTTIC (I, 1) + FLUXCO2 / 86400.0 !mmolC/m3/sec
 
-               DICGAS (I, 1) = DICGAS (I, 1) + FLUXCO2 !TDIC flux from air-sea gas exchange, accumulated
-            End Do
-		 Else If (AIRSEA_OPTION == 6) Then
-		    FACTOR = AREAR * (BREAR*WMS) ** CREAR
-!
-			Do I = 1, MLOC
-
-			If (JDAY <= JDstart1(1) .OR. JDAY >= JDstart1(2)) Then
-               TDOS = T (I, 1)
-               RNU = 0.54 + 0.7 * TDOS / 30.0 - 0.07 * SALT (I, 1) / &
-              & 35.0
-
-               KRDO = FACTOR * RNU !up to here, same as in calculation of air-sea O2 fluxes (m/day)
-               KRCO2 = (32.0/44.0) ** 0.25 * KRDO !conversion of oxygen reareation into CO2 reareagion rate by Chapra (1997)
-
-			Else If (JDAY > JDstart1(1) .AND. JDAY < JDstart1(2)) Then
-               Sc = 2073.1 - 125.62 * T (I, 1) + 3.6276 * T (I, 1) ** &
-              & 2.0 - 0.043219 * T (I, 1) ** 3.0 !Schmidt number for CO2 (W92)
-               KRCO2 = FACTOR * Sqrt (660.0/Sc)!gas transfer velocity in cm/hr
-               KRCO2 = KRCO2 * 24.0 / 100.0 !m/day
-		    End If
-!
-#  if !defined (WET_DRY)
-				IF(D(I) > 0.0_SP)THEN
-#  else
-				IF(ISWETN(I) == 1)THEN
-#  endif
-!
-					FLUXCO2 = KRCO2 / (D(I)*DZ(1)) * &
-              & (CO2star_sat(I)-CO2star_surf(I))!mmolC/m3/d
-				ELSE
-					FLUXCO2=0.0_SP
-				ENDIF
-!
-               DTTIC (I, 1) = DTTIC (I, 1) + FLUXCO2 / 86400.0 !mmolC/m3/sec
-
-               DICGAS (I, 1) = DICGAS (I, 1) + FLUXCO2 !DIC flux from air-sea gas exchange, accumulated
-            End Do
-         End If
+            DICGAS (I, 1) = DICGAS (I, 1) + FLUXCO2 !TDIC flux from air-sea gas exchange, accumulated
+          End Do
+        End If
 
 	  !******** Sediment flux
          If ( .Not. BENTHIC_FLUXES) Then

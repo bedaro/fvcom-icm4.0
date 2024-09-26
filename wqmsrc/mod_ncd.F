@@ -179,6 +179,7 @@ Module MOD_NCD
 				,FTCOD_vid		&
 				,COD_vid		&
 				,REAERDO_vid	&
+        ,reaermeth_vid  &
 			!Added the following for debuguing benthic fluxes
 				,BFLUX_vid		&
 			!Added the following to save TDIC and TALK fluxes as output
@@ -198,8 +199,8 @@ Module MOD_NCD
 				,ALKNH4SED_vid	&
 				,ALKNO3SED_vid	&
 			!Added the following to save TDIC and TALK advection + horiz diff AND vert diff fluxes as output
-!				,ADVFLUX_vid	&
-!				,VDIFFLUX_vid	&
+				,ADVFLUX_vid	&
+				,VDIFFLUX_vid	&
 			!If (SEDIMENT_CALC) Then
 				,JPOC_vid		&
 				,JPON_vid		&
@@ -1516,6 +1517,15 @@ Contains
 			ierr = nf90_put_att(nc_ofid,REAERDO_vid,"units","gO2/m^3/day")
 			ierr = nf90_put_att(nc_ofid,REAERDO_vid,"grid","fvcom_grid")
 			ierr = nf90_put_att(nc_ofid,REAERDO_vid,"type","data")
+   case ( "REAERMETH" )
+      ierr = nf90_def_var(nc_ofid,"reaermethod",nf90_int,dynmtime, reaermeth_vid)
+      ierr = nf90_put_att(nc_ofid,reaermeth_vid,"long_name","Air/Sea &
+        &Exchange Method")
+      ierr = nf90_put_att(nc_ofid,reaermeth_vid,"standard_name", &
+        & "REAERMETH")
+      ierr = nf90_put_att(nc_ofid,reaermeth_vid,"units", &
+        "1=reaeration, 2=W92, 3=N00, 4=Ho06, 5=W12")
+			ierr = nf90_put_att(nc_ofid,reaermeth_vid,"type","data")
 		case ( "BFLUX")
 			ierr = nf90_def_var(nc_ofid,"BFLUX",nf90_float,dynm3dn_9,BFLUX_vid)  !should be 9 layers only
 			ierr = nf90_put_att(nc_ofid,BFLUX_vid,"long_name","BFLUX")
@@ -1542,20 +1552,20 @@ Contains
 		case ( "ALKREM")
 		case ( "ALKNH4SED")
 		case ( "ALKNO3SED")
-		!case ( "ADVFLUX")
-		!	ierr = nf90_def_var(nc_ofid,"ADVFLUX",nf90_float,dynm3dn_lay,ADVFLUX_vid)
-		!	ierr = nf90_put_att(nc_ofid,ADVFLUX_vid,"long_name","ADVFLUX")
-		!	ierr = nf90_put_att(nc_ofid,ADVFLUX_vid,"standard_name","ADVFLUX")
-		!	ierr = nf90_put_att(nc_ofid,ADVFLUX_vid,"units","????")
-		!	ierr = nf90_put_att(nc_ofid,ADVFLUX_vid,"grid","fvcom_grid")
-		!	ierr = nf90_put_att(nc_ofid,ADVFLUX_vid,"type","data")
-		!case ( "VDIFFLUX")
-		!	ierr = nf90_def_var(nc_ofid,"VDIFFLUX",nf90_float,dynm3dn_lay,VDIFFLUX_vid)
-		!	ierr = nf90_put_att(nc_ofid,VDIFFLUX_vid,"long_name","VDIFFLUX")
-		!	ierr = nf90_put_att(nc_ofid,VDIFFLUX_vid,"standard_name","VDIFFLUX")
-		!	ierr = nf90_put_att(nc_ofid,VDIFFLUX_vid,"units","???")
-		!	ierr = nf90_put_att(nc_ofid,VDIFFLUX_vid,"grid","fvcom_grid")
-		!	ierr = nf90_put_att(nc_ofid,VDIFFLUX_vid,"type","data")
+		case ( "ADVFLUX")
+			ierr = nf90_def_var(nc_ofid,"ADVFLUX",nf90_float,dynm3dn_lay,ADVFLUX_vid)
+			ierr = nf90_put_att(nc_ofid,ADVFLUX_vid,"long_name","ADVFLUX")
+			ierr = nf90_put_att(nc_ofid,ADVFLUX_vid,"standard_name","ADVFLUX")
+			ierr = nf90_put_att(nc_ofid,ADVFLUX_vid,"units","????")
+			ierr = nf90_put_att(nc_ofid,ADVFLUX_vid,"grid","fvcom_grid")
+			ierr = nf90_put_att(nc_ofid,ADVFLUX_vid,"type","data")
+		case ( "VDIFFLUX")
+	  	ierr = nf90_def_var(nc_ofid,"VDIFFLUX",nf90_float,dynm3dn_lay,VDIFFLUX_vid)
+			ierr = nf90_put_att(nc_ofid,VDIFFLUX_vid,"long_name","VDIFFLUX")
+			ierr = nf90_put_att(nc_ofid,VDIFFLUX_vid,"standard_name","VDIFFLUX")
+			ierr = nf90_put_att(nc_ofid,VDIFFLUX_vid,"units","???")
+			ierr = nf90_put_att(nc_ofid,VDIFFLUX_vid,"grid","fvcom_grid")
+			ierr = nf90_put_att(nc_ofid,VDIFFLUX_vid,"type","data")
 !: the following are related to SEDIMENT_CALC
 		case ( "JPOC")
 		case ( "JPON")
@@ -2248,9 +2258,9 @@ end do
 					  ,PR1, PR2, FI1, FI2, IK1, IK2, GPP, NPP, DDOC, 					&
 					  DCOD, NITRIF, DOPR, DORALG, RESP, FTCOD, COD, 					&
 					  REAERDO, BFLUX, DDOC, DCOD, NITRIF, DORALG, RESP,FTCOD, 			&
-					  SEDIMENT_CALC, SOLIDS_CALC, SSI, SAV_CALC !,&
-				!	,ADVFLUX	&
-				!   ,VDIFFLUX
+					  SEDIMENT_CALC, SOLIDS_CALC, SSI, SAV_CALC ,&
+					 ADVFLUX	&
+				   ,VDIFFLUX
 
 	USE MOD_SED, ONLY: JPOC, JPON, JPOP, JPOS, CTEMP,SODTM1S, JNH4TM1S,JNO3TM1S, BENDEN, JCH4TM1S 	&
 				,JCH4GTM1S,JHSTM1S,JPO4TM1S,JSITM1S	,NH41TM1S,NH42TM1S,NO31TM1S ,NO32TM1S 			&
@@ -2260,6 +2270,7 @@ end do
 	USE MOD_CO2SYS, ONLY: 	DICUPT, DICBMP, DICPRD, DICMNL, DICDEN, DICGAS, &
 							DICSED, ALKNH4, ALKNO3, ALKNIT,ALKDEN, ALKREM,	&
 							ALKNH4SED,ALKNO3SED
+  Use MOD_DIC_TALK, ONLY: GET_AIRSEA_METHOD
 
 	USE MOD_ZOOP, ONLY: B1SZ, B2SZ, B1LZ, B2LZ, DOSZ, DOLZ, SZ, LZ
 
@@ -2593,6 +2604,11 @@ end do
 			i1 = lbound(REAERDO,1) ; i2 = ubound(REAERDO,1)
 			call putvar(i1,i2,MLOC,mgl,kb-1,kb-1,"n",REAERDO,nc_ofid,REAERDO_vid,myid,nprocs,ipt)
 
+    case ( "REAERMETH" )
+      if(MSR) Then
+        ierr = nf90_put_var(nc_ofid,reaermeth_vid,GET_AIRSEA_METHOD(),&
+          & START=dims)
+      end if
 		case ( "BFLUX")
 			i1 = lbound(BFLUX,1) ; i2 = ubound(BFLUX,1)
 			call putvar(i1,i2,MLOC,mgl,kb-1,9,"n",BFLUX,nc_ofid,BFLUX_vid,myid,nprocs,ipt)	  !9 variables for BFLUX
@@ -2618,13 +2634,13 @@ end do
 		case ( "ALKNH4SED" )
 		case ( "ALKNO3SED" )
 !
-		!case ( "ADVFLUX")
-		!	i1 = lbound(ADVFLUX,1) ; i2 = ubound(ADVFLUX,1)
-		!	call putvar(i1,i2,MLOC,mgl,kb-1,kb-1,"n",ADVFLUX,nc_ofid,ADVFLUX_vid,myid,nprocs,ipt)
+		case ( "ADVFLUX")
+			i1 = lbound(ADVFLUX,1) ; i2 = ubound(ADVFLUX,1)
+			call putvar(i1,i2,MLOC,mgl,kb-1,kb-1,"n",ADVFLUX,nc_ofid,ADVFLUX_vid,myid,nprocs,ipt)
 
-		!case ( "VDIFFLUX")
-		!	i1 = lbound(VDIFFLUX,1) ; i2 = ubound(VDIFFLUX,1)
-		!	call putvar(i1,i2,MLOC,mgl,kb-1,kb-1,"n",VDIFFLUX,nc_ofid,VDIFFLUX_vid,myid,nprocs,ipt)
+		case ( "VDIFFLUX")
+	  	i1 = lbound(VDIFFLUX,1) ; i2 = ubound(VDIFFLUX,1)
+			call putvar(i1,i2,MLOC,mgl,kb-1,kb-1,"n",VDIFFLUX,nc_ofid,VDIFFLUX_vid,myid,nprocs,ipt)
 !The following are part of sediment module mod_sed
 		case ( "JPOC" )
 		case ( "JPON" )

@@ -219,8 +219,8 @@ Program FVCOMICM
   !
 #if defined (ONLY_AIRSEA)
       Use MOD_CO2SYS, Only: CO2star_sat, pCO2atm, CO2star_surf, &
-     & AIRSEA_OPTION, UNITCO2ATM, K0, FugFac, DICGAS, &
-	 & JDstart1
+     & UNITCO2ATM, K0, FugFac, DICGAS
+      Use MOD_DIC_TALK, Only: GET_AIRSEA_METHOD
       Use MOD_WQM, Only: AREAR, BREAR, CREAR, WMS
 #endif
 
@@ -276,6 +276,7 @@ Program FVCOMICM
       Real (SP) :: FLUXCO2, TDOS, RNU, KRDO, KRCO2, FACTOR, Sc
       Real (SP) :: FACTORaux, CHLORN, AA, TSaux, DOS
       Real (SP) :: auxLB
+      Integer :: airsea_method
 #endif
 
 	  REAL (SP) :: ELTMS_Hydro1=0.0,ELTMS_hydro2=0.0
@@ -971,7 +972,8 @@ Program FVCOMICM
             End Do
          End If
 !
-         If (AIRSEA_OPTION == 1) Then !using AREAR,BREAR,and CREAR
+         airsea_method = GET_AIRSEA_METHOD()
+         If (airsea_method == 1) Then !using AREAR,BREAR,and CREAR
 !
             FACTORaux = AREAR * (BREAR*WMS) ** CREAR
             Do I = 1, MLOC
@@ -998,16 +1000,14 @@ Program FVCOMICM
               & 1)) / 86400.
             End Do
 !
-         !Else
-         Else If(AIRSEA_OPTION>1 .AND. AIRSEA_OPTION<=5) Then
-!
-            If (AIRSEA_OPTION == 2) Then !Wanninkhof (1992)
+         Else
+            If (airsea_method == 2) Then !Wanninkhof (1992)
                FACTORaux = 0.31 * WMS ** 2.0 !0.31 for winds in steady staate;  0.39 for long-term averaged winds
-            Else If (AIRSEA_OPTION == 3) Then !Nightingale (2000)
+            Else If (airsea_method == 3) Then !Nightingale (2000)
                FACTORaux = (0.33*WMS+0.222*WMS**2.0)
-            Else If (AIRSEA_OPTION == 4) Then !Ho (2006)
+            Else If (airsea_method == 4) Then !Ho (2006)
                FACTORaux = 0.266 * WMS ** 2.0
-            Else If (AIRSEA_OPTION == 5) Then !Wanninkhof et al (2013): wind in equation is <U^2>,meaning the time mean of U^2
+            Else If (airsea_method == 5) Then !Wanninkhof et al (2013): wind in equation is <U^2>,meaning the time mean of U^2
                FACTORaux = 0.251 * WMS ** 2.0 !over the time interval of flux determination (they compute monthly fluxes with 6hourly wind data)
             End If
 !
@@ -1052,69 +1052,6 @@ Program FVCOMICM
 !
                DTM (I, 1, 27) = KRDO / (D(I)*DZ2D(I,1)) * (DOS-DOXG(I, 1)) &
               & / 86400.
-            End Do
-		 Else If(AIRSEA_OPTION == 6) Then ! Combination of Option 1 method and Wanninkhof et al (2013)
-		    FACTORaux = AREAR * (BREAR*WMS) ** CREAR
-!
-			If(MSR) Write (*,*) 'JDAY= ',JDAY
-			Do I = 1, MLOC
-			 If (JDAY <= JDstart1(1) .OR. JDAY >= JDstart1(2)) Then
-               TDOS = T (I, 1)
-               RNU = 0.54 + 0.7 * TDOS / 30.0 - 0.07 * SALT (I, 1) / &
-              & 35.0
-           !            KRDO      = 0.157*RNU*(1.5*WMS)**1.5
-               KRDO = FACTORaux * RNU !up to here, same as in calculation of air-sea O2 fluxes (m/day)
-               KRCO2 = (32.0/44.0) ** 0.25 * KRDO !conversion of oxygen reareation into CO2 reareagion rate by Chapra (1997)
-!
-!
-           !oxygen exchange
-               CHLORN = SALT (I, 1) / 1.80655
-               DOS = 14.5532 + TDOS * (0.0054258*TDOS-0.38217) - CHLORN &
-              & * (0.1665+TDOS*(9.796E-5*TDOS-5.866E-3))
-!
-			 Else If (JDAY > JDstart1(1) .AND. JDAY < JDstart1(2)) Then
-           !CO2 exchange
-               Sc = 2073.1 - 125.62 * T (I, 1) + 3.6276 * T (I, 1) ** &
-              & 2.0 - 0.043219 * T (I, 1) ** 3.0 !Schmidt number for CO2 (W92)
-           !Sc = 2116.8 - 136.25 * T(I,1) + 4.7353 * T(I,1)**2.0          &
-                !     - 0.092307 * T(I,1)**3.0 + 0.0007555 * T(I,1)**4.0     !Schmidt number for CO2 (W14)
-!
-               KRCO2 = FACTORaux * Sqrt (660.0/Sc)!gas transfer velocity in cm/hr
-               KRCO2 = KRCO2 * 24.0 / 100.0 !m/day
-!
-           !oxygen exchange
-               Sc = 1953.4 - 128.0 * T (I, 1) + 3.9918 * T (I, 1) ** &
-              & 2.0 - 0.050091 * T (I, 1) ** 3.0 !Schmidt number for O2 (W92)
-           !  Sc = 1920.4 - 135.6 * T(I,1) + 5.2122 * T(I,1)**2.0          &
-           !       - 0.10939 * T(I,1)**3.0 + 0.00093777 * T(I,1)**4.0    !Schmidt number for O2 (W14)
-!
-               KRDO = FACTORaux * Sqrt (660.0/Sc)!gas transfer velocity (W12) in cm/hr
-               KRDO = KRDO * 24.0 / 100.0 !m/day
-!
-           !:
-           !  Calculate O2 saturation concentration using Garcia and Gordon
-           !  L&O (1992) formula, (EXP(AA) is in ml/l).
-           !
-               TSaux = Log ((298.15-T(I, 1))/(273.15+T(I, 1)))
-               AA = 2.00907 + TSaux * (3.22014+TSaux*(4.05010+&
-              & TSaux*(4.94457+TSaux*(-0.256847+TSaux*3.88767)))) + &
-              & SALT (I, 1) * (-0.00624523+TSaux*(-0.00737614+TSaux*(-&
-              & 0.0103410+TSaux*-0.00817083))) + - 0.000000488682 * &
-              & SALT (I, 1) * SALT (I, 1)
-!
-               DOS = Exp (AA) * 1.429 !  Converting from ml/l to mg/l (1mg/l=22.391/31.998 ml/l ~ 0.7ml/l)
-!
-			 END IF
-!
-			  FLUXCO2 = KRCO2 / (D(I)*DZ(1)) * &
-             & (CO2star_sat(I)-CO2star_surf(I))!mmolC/m3/d
-!
-              DTM (I, 1, 33) = FLUXCO2 / 86400.0 !mmolC/m3/sec
-           !DICGAS(I,1) = FLUXCO2  !DIC flux from air-sea gas exchange, snapshot   !mmolC/m3/day
-              DICGAS (I, 1) = DICGAS (I, 1) + FLUXCO2 !DIC flux from air-sea gas exchange, accumulated
-!
-              DTM (I, 1, 27) = KRDO / (D(I)*DZ(1)) * (DOS-DOXG(I, 1)) &
-             & / 86400.
             End Do
 !
          End If

@@ -54,7 +54,6 @@ contains
   ! Output the final state of all the variables CO2SYSCONSTANTS could modify.
   ! This format matches that of the test result files read by check_result().
   subroutine debug()
-    use mod_wqm, only: wqm_alloc, t, salt, talk, po4 
     integer :: i, j
     print 10, "TB", ((tb(i,j), i=1, mgl), j=1, kbm1)
     print 10, "TF", ((tf(i,j), i=1, mgl), j=1, kbm1)

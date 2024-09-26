@@ -1477,8 +1477,7 @@ Contains
     !
          Use MOD_WQMINIT, Only: COD_CALC
 !
-         Use MOD_CO2SYS, Only: AIRSEA_OPTION, & 
-        & JDstart1
+         Use MOD_DIC_TALK, Only: GET_AIRSEA_METHOD
 !
          Implicit None
          Real (SP) :: KRDO
@@ -1487,6 +1486,7 @@ Contains
         & DOR2, DOR3, DOP1, DOP2, DOP3
          Real (SP) :: FACTOR, CHLORN, TDOS, RNU, Sc, AA, TS
          Real (SP) :: DTDO (0:MTLOC, KBM1)
+         Integer :: airsea_method
     !
          DTDO = 0.0
     !
@@ -1553,113 +1553,65 @@ Contains
           !
             End Do
          End Do
-    !
-    !
-    !******* Reaeration
-!
-         If (AIRSEA_OPTION == 1) Then
-            FACTOR = AREAR * (BREAR*WMS) ** CREAR
-            Do I = 1, MLOC
-               CHLORN = SALT (I, 1) / 1.80655
-               TDOS = T (I, 1)
-               RNU = 0.54 + 0.7 * TDOS / 30 - 0.07 * SALT (I, 1) / 35.
-          !     KRDO      = 0.157*RNU*(1.5*WMS)**1.5
-               KRDO = FACTOR * RNU
-               DOS = 14.5532 + TDOS * (0.0054258*TDOS-0.38217) - CHLORN &
+        !
+        !
+        !******* Reaeration
+        !
+        airsea_method = GET_AIRSEA_METHOD()
+        If (airsea_method == 1) Then
+          FACTOR = AREAR * (BREAR*WMS) ** CREAR
+          Do I = 1, MLOC
+            CHLORN = SALT (I, 1) / 1.80655
+            TDOS = T (I, 1)
+            RNU = 0.54 + 0.7 * TDOS / 30 - 0.07 * SALT (I, 1) / 35.
+            !     KRDO      = 0.157*RNU*(1.5*WMS)**1.5
+            KRDO = FACTOR * RNU
+            DOS = 14.5532 + TDOS * (0.0054258*TDOS-0.38217) - CHLORN &
               & * (0.1665+TDOS*(9.796E-5*TDOS-5.866E-3))
-               DTDO (I, 1) = DTDO (I, 1) + KRDO / (D(I)*DZ2D(I,1)) * &
+            DTDO (I, 1) = DTDO (I, 1) + KRDO / (D(I)*DZ2D(I,1)) * &
               & (DOS-DOXG(I, 1)) / 86400.
 
-               REAERDO (I, 1) = KRDO / (D(I)*DZ2D(I,1)) * (DOS-DOXG(I, 1))!gO2/m^3/day rate of areation in surface layer
-          !Stumm and Morgan (third edition) pp242
-            End Do
-         !Else
-		 Else If(AIRSEA_OPTION>1 .AND. AIRSEA_OPTION<=5) Then
-!
-            If (AIRSEA_OPTION == 2) Then 		!Wanninkhof (1992)
-               FACTOR = 0.31 * WMS ** 2.0 		!0.31 for winds in steady state;  0.39 for long-term averaged winds
-            Else If (AIRSEA_OPTION == 3) Then 	!Nightingale (2000)
-               FACTOR = (0.33*WMS+0.222*WMS**2.0)
-            Else If (AIRSEA_OPTION == 4) Then 	!Ho (2006)
-               FACTOR = 0.266 * WMS ** 2.0
-            Else If (AIRSEA_OPTION == 5) Then 	!Wanninkhof et al (2013): wind in equation is <U^2>,
+            REAERDO (I, 1) = KRDO / (D(I)*DZ2D(I,1)) * (DOS-DOXG(I, 1))!gO2/m^3/day rate of areation in surface layer
+            !Stumm and Morgan (third edition) pp242
+          End Do
+        Else
+          If (airsea_method == 2) Then 		!Wanninkhof (1992)
+            FACTOR = 0.31 * WMS ** 2.0 		!0.31 for winds in steady state;  0.39 for long-term averaged winds
+          Else If (airsea_method == 3) Then 	!Nightingale (2000)
+            FACTOR = (0.33*WMS+0.222*WMS**2.0)
+          Else If (airsea_method == 4) Then 	!Ho (2006)
+            FACTOR = 0.266 * WMS ** 2.0
+          Else If (airsea_method == 5) Then 	!Wanninkhof et al (2013): wind in equation is <U^2>,
 												!meaning the time mean of U^2
-               FACTOR = 0.251 * WMS ** 2.0      !over the time interval of flux determination
+            FACTOR = 0.251 * WMS ** 2.0      !over the time interval of flux determination
 												!(they compute monthly fluxes with 6hourly wind data)
-			   !FACTOR = AREAR * (BREAR*WMS) ** CREAR
-            End If
+          End If
 !
-            Do I = 1, MLOC
-!
-               Sc = 1953.4 - 128.0 * T (I, 1) + 3.9918 * T (I, 1) ** &
+          Do I = 1, MLOC
+            Sc = 1953.4 - 128.0 * T (I, 1) + 3.9918 * T (I, 1) ** &
               & 2.0 - 0.050091 * T (I, 1) ** 3.0 !Schmidt number for O2 (W92)
 
-               KRDO = FACTOR * Sqrt (660.0/Sc)!gas transfer velocity (W12) in cm/hr
-               KRDO = KRDO * 24.0 / 100.0 !m/day
+            KRDO = FACTOR * Sqrt (660.0/Sc)!gas transfer velocity (W12) in cm/hr
+            KRDO = KRDO * 24.0 / 100.0 !m/day
 
-               TS = Log ((298.15-T(I, 1))/(273.15+T(I, 1)))
-               AA = 2.00907 + TS * (3.22014+TS*(4.05010+TS*(4.94457+&
+            TS = Log ((298.15-T(I, 1))/(273.15+T(I, 1)))
+            AA = 2.00907 + TS * (3.22014+TS*(4.05010+TS*(4.94457+&
               & TS*(-0.256847+TS*3.88767)))) + SALT (I, 1) * (-&
               & 0.00624523+TS*(-0.00737614+TS*(-0.0103410+TS*-&
               & 0.00817083))) + (-0.000000488682) * SALT (I, 1) * SALT &
               & (I, 1)
 
-		  !  Converting from ml/l to mg/l (1mg/l=22.391/31.998 ml/l ~ 0.7ml/l)
-               DOS = Exp (AA) * 1.429
+		        !  Converting from ml/l to mg/l (1mg/l=22.391/31.998 ml/l ~ 0.7ml/l)
+            DOS = Exp (AA) * 1.429
 !
-               DTDO (I, 1) = DTDO (I, 1) + KRDO / (D(I)*DZ(1)) * &
+            DTDO (I, 1) = DTDO (I, 1) + KRDO / (D(I)*DZ(1)) * &
               & (DOS-DOXG(I, 1)) / 86400.
 !
-          !debugging areation
-               REAERDO (I, 1) = KRDO / (D(I)*DZ(1)) * (DOS-DOXG(I, 1))!gO2/m^3/day rate of areation in surface layer
-          !Stumm and Morgan (third edition) pp242
-            End Do
-		 Else If(AIRSEA_OPTION == 6) Then ! Combination of Option 1 method and Wanninkhof et al (2013)
-		    FACTOR = AREAR * (BREAR*WMS) ** CREAR
-!
-			Do I = 1, MLOC
-!
-		    If (JDAY <= JDstart1(1) .OR. JDAY >= JDstart1(2)) Then
-			   CHLORN = SALT (I, 1) / 1.80655
-               TDOS = T (I, 1)
-               RNU = 0.54 + 0.7 * TDOS / 30 - 0.07 * SALT (I, 1) / 35.
-
-               KRDO = FACTOR * RNU
-               DOS = 14.5532 + TDOS * (0.0054258*TDOS-0.38217) - CHLORN &
-              & * (0.1665+TDOS*(9.796E-5*TDOS-5.866E-3))
-!
-			Else If (JDAY > JDstart1(1) .AND. JDAY < JDstart1(2)) Then
-
-          !Schmidt number for O2 (W92)
-               Sc = 1953.4 - 128.0 * T (I, 1) + 3.9918 * T (I, 1) ** &
-              & 2.0 - 0.050091 * T (I, 1) ** 3.0
-
-               KRDO = FACTOR * Sqrt (660.0/Sc)!gas transfer velocity (W12) in cm/hr
-               KRDO = KRDO * 24.0 / 100.0 !m/day
-
-               TS = Log ((298.15-T(I, 1))/(273.15+T(I, 1)))
-               AA = 2.00907 + TS * (3.22014+TS*(4.05010+TS*(4.94457+&
-              & TS*(-0.256847+TS*3.88767)))) + SALT (I, 1) * (-&
-              & 0.00624523+TS*(-0.00737614+TS*(-0.0103410+TS*-&
-              & 0.00817083))) + (-0.000000488682) * SALT (I, 1) * SALT &
-              & (I, 1)
-!
-               DOS = Exp (AA) * 1.429 !  Converting from ml/l to mg/l (1mg/l=22.391/31.998 ml/l ~ 0.7ml/l)
-
-			 End If
-!
-               DTDO (I, 1) = DTDO (I, 1) + KRDO / (D(I)*DZ2D(I,1)) * &
-              & (DOS-DOXG(I, 1)) / 86400.
-!
-          !Debugging aeration
-
-               REAERDO (I, 1) = KRDO / (D(I)*DZ2D(I,1)) * (DOS-DOXG(I, 1))!gO2/m^3/day rate of areation
-																		  !in surface layer
-
-          !Stumm and Morgan (third edition) pp242
-
-            End Do
-         End If
+            !debugging aeration
+            REAERDO (I, 1) = KRDO / (D(I)*DZ(1)) * (DOS-DOXG(I, 1))!gO2/m^3/day rate of aeration in surface layer
+            !Stumm and Morgan (third edition) pp242
+          End Do
+        End If
 !
     !******* Sediment oxygen demand
     !

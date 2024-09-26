@@ -87,14 +87,10 @@ Module MOD_CO2SYS
      & ALKNH4SED_GL, ALKNO3SED_GL
   !DICNIT_GL
 !
-      Integer :: AIRSEA_OPTION !choice of parameterization to calculate O2 and CO2 air-sea exchange
-!
       Real (SP) :: NXPCO2, pco2atmNX
       Character (Len=7) :: MAPCO2ATM
       Character (Len=4) :: UNITCO2ATM
 !
-      Real (SP), Dimension (2) :: JDstart1 !AN
-
       Real(SP), Parameter :: RGasConstant = 83.1451_SP ! ml bar-1 K-1 mol-1, DOEv2
       ! REAL(SP), Parameter :: RGasConstant = 83.14472_SP ! ml bar-1 K-1 mol-1, DOEv3 !(Dickson et al., 2007). !Commented in CO2SYS.m v1.1
       Real(SP), Parameter :: Temp_CtoK = 273.15_SP
