@@ -136,7 +136,7 @@ Subroutine NCD_READ_SHAPE (INFILE)
       Use MOD_NCD, Only: NC_FID, GETSVAR
       Use NETCDF
       Use MOD_LIMS, Only: KBM2
-      Use MOD_HYDROVARS, Only: NVG, XG, YG, HG, Z, Z2DG, ZZ, DZ,DZ2D, DZZ, &
+      Use MOD_HYDROVARS, Only: NVG, XG, YG, HG, Z, Z2DG, &
      & num_hyd_ints,SIGVAR
   !Took CONTROL out of MOD_HYDROVARS and put the used variables here
       Use MOD_CONTROL, Only: SERIAL, MSR, PAR
@@ -219,18 +219,8 @@ Subroutine NCD_READ_SHAPE (INFILE)
          Z (K) = - ((K-1)/FLOAT(KB-1)) ** 1.5
      !
       End Do
-  !--Compute derivative and intra-sigma levels
-      Do K = 1, KBM1
-         ZZ (K) = 0.5_SP * (Z(K)+Z(K+1))
-         DZ (K) = Z (K) - Z (K+1)
-      End Do
-      ZZ (KB) = 2.0_SP * ZZ (KBM1) - ZZ (KBM2)
-  !
-      Do K = 1, KBM2
-         DZZ (K) = ZZ (K) - ZZ (K+1)
-      End Do
-      DZZ (KB-1) = 0.0
-      DZ (KB) = 0.0
+
+      call set_sigma
 
 #if defined (NEWSIGMA)
 	  IF(SIGVAR)THEN
@@ -238,19 +228,7 @@ Subroutine NCD_READ_SHAPE (INFILE)
 		Call GETSVAR (NC_FID, LEN_TRIM('siglev3dn'), 'siglev3dn', MGL, KB, TEMP)
 		Z2DG (1:MGL,1:KB) = TEMP (1:MGL,1:KB)
 		Deallocate (TEMP)
-	  ELSE
-		DO I=1,MGL
-		DO K=1,KB
-			Z2DG (I,K) = Z(K)
-		ENDDO
-		ENDDO
 	  ENDIF
-#else
-	  DO I=1,MGL
-	  DO K=1,KB
-			Z2DG (I,K) = Z(K)
-	  ENDDO
-	  ENDDO
 #endif
 
   !

@@ -196,7 +196,7 @@ MAIN  = mod_prec.F	mod_types.F	mod_utils.F	mod_input.F	mod_control.F	\
 	mod_kin.F	mod_hydro.F		tvds.F			\
 	adv_wqm.F	vdif_wqm.F	vertvl.F	viscofh.F	\
 	bcond_wqm.F	fct_nut.F	mod_filenames.F	wqm_main.F	\
-	mod_clock.F
+	mod_clock.F set_sigma.F
 
  SRCS = $(MAIN)
 
