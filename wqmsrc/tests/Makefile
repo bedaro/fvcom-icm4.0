@@ -22,4 +22,7 @@ clean:
 	$(RM) *.o *.mod *.a  *.inc $(test_mods_TESTS:.pf=.F90) \
 		$(test_core_TESTS:.pf=.F90) test_mods test_core
 
+test_core: ../libsut.a
+test_mods: ../libsut.a
+
 test_adv.mod: test_grid.mod
