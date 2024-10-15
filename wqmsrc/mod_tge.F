@@ -46,7 +46,7 @@ Module MOD_TGE
   !
       Use MOD_HYDROVARS, Only: ZERO, XC, YC, VX, VY
   !Took MOD_CONTROL out of MOD_HYDROVARS and put the used variables here
-      Use MOD_CONTROL, Only: MSR
+      Use MOD_CONTROL, Only: MSR, verbose
 #  if defined (MULTIPROCESSOR)
       Use MOD_PAR, Only: NGID
 # endif
@@ -183,12 +183,14 @@ Contains
          Real (SP) DTMP
          Integer N1, N2, N3, J1, J2, J3
     !
-    !----------------------------REPORT--------------------------------------------!
-         If (MSR) WRITE (*,*) '!'
-         If (MSR) WRITE (*,*) '!           SETTING UP TRIS/ELEMENTS/EDG&
-        &ES/CVS          '
-         If (MSR) WRITE (*,*) '!'
-    !----------------------------INITIALIZE----------------------------------------!
+    !----------------------------REPORT---------------------------------------!
+         if (MSR .and. verbose) then
+           WRITE (*,*) '!'
+           WRITE (*,*) '!           SETTING UP TRIS/ELEMENTS/EDG&
+          &ES/CVS          '
+           WRITE (*,*) '!'
+         end if
+    !----------------------------INITIALIZE------------------------------------!
     !
          Allocate (ISBCE(0:NTLOC))
          ISBCE = 0
@@ -245,7 +247,9 @@ Contains
             End Do
          End Do
          Deallocate (CELLS, CELLCNT, NBET)!LB added NBET to the deallocation statement
-         If (MSR) WRITE (*,*) '!  NEIGHBOR FINDING      :    COMPLETE'
+         If (verbose .and. MSR) then
+           WRITE (*,*) '!  NEIGHBOR FINDING      :    COMPLETE'
+         end if
     !
     !--ENSURE ALL ELEMENTS HAVE AT LEAST ONE NEIGHBOR------------------------------!
     !
@@ -281,7 +285,9 @@ Contains
                End If
             End If
          End Do
-         If (MSR) WRITE (*,*) '!  ISONB SETTING         :    COMPLETE'
+         If (MSR .and. verbose) then
+           WRITE (*,*) '!  ISONB SETTING         :    COMPLETE'
+         end if
     !
     !==============================================================================|
     !             DEFINE NTVE, NBVE, NBVT                                          !
@@ -458,7 +464,9 @@ Contains
            & 3
             Call PSTOP
          End If
-         If (MSR) WRITE (*,*) '!  NBVE/NBVT             :    COMPLETE'
+         If (MSR .and. verbose) then
+           WRITE (*,*) '!  NBVE/NBVT             :    COMPLETE'
+         end if
     !
     !
     !==============================================================================!
@@ -546,7 +554,9 @@ Contains
             SITAC (I) = Atan2 (DLTYC(I), DLTXC(I))
          End Do
     !
-         If (MSR) WRITE (*,*) '!  EDGE SETUP            :    COMPLETE'
+         If (MSR .and. verbose) then
+           WRITE (*,*) '!  EDGE SETUP            :    COMPLETE'
+         end if
     !
     !
     !==============================================================================!
@@ -756,20 +766,20 @@ Contains
       !
          If (NISBCE_1 > 0) Then
             Allocate (LISBCE_1(NISBCE_1))
-         Else
-              WRITE(IREPORT,*)  '!  WARNING               :    NO ELEMENTS WITH ISBCE=1'
+         Else if (verbose) then
+            WRITE(IREPORT,*)  '!  WARNING               :    NO ELEMENTS WITH ISBCE=1'
          End If
       !
          If (NISBCE_2 > 0) Then
             Allocate (LISBCE_2(NISBCE_2))
-         Else
-              WRITE(IREPORT,*)  '!  WARNING               :    NO ELEMENTS WITH ISBCE=2'
+         Else if (verbose) then
+            WRITE(IREPORT,*)  '!  WARNING               :    NO ELEMENTS WITH ISBCE=2'
          End If
       !
          If (NISBCE_3 > 0) Then
             Allocate (LISBCE_3(NISBCE_3))
-         Else
-              WRITE(IREPORT,*)  '!  WARNING               :    NO ELEMENTS WITH ISBCE=3'
+         Else if (verbose) then
+            WRITE(IREPORT,*)  '!  WARNING               :    NO ELEMENTS WITH ISBCE=3'
          End If
       !
       !
@@ -802,9 +812,11 @@ Contains
             If (ISBCE(I) == 2) EPOR (I) = 0.0_SP
          End Do
       !
-         If (MSR) WRITE (*,*) '!  NISBCE/LISBCE/EPOR    :    COMPLETE'
+         if(MSR .and. verbose) then
+            WRITE (*,*) '!  NISBCE/LISBCE/EPOR    :    COMPLETE'
       !
-         If (MSR) WRITE (*,*) '!  TRIS/EDGES/CVOLS      :    COMPLETE'
+            WRITE (*,*) '!  TRIS/EDGES/CVOLS      :    COMPLETE'
+         end if
       !
          Return
       End Subroutine TRIANGLE_GRID_EDGE

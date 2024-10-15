@@ -74,7 +74,7 @@ Program FVCOMICM
   !
       Use MOD_BCMAP, Only: BCMAP_DEALLOC
 
-      Use MOD_CONTROL, Only: SERIAL, MSR, PAR, CASENAME
+      Use MOD_CONTROL, Only: SERIAL, MSR, PAR, CASENAME, verbose
   !
       Use MOD_FILEINFO, Only: DIA, BFO, KFL, RSO, SNP, PLT, APL, TFL, &
      & OPL, SFO, ICO, MBL, UNIT_STN, UNIT_HIS, CNAME, INIT_FILE_INFO,IREPORT
@@ -290,6 +290,9 @@ Program FVCOMICM
   !**                       Program Initialization                       **
   !************************************************************************
   !
+#  if defined(KILLTREES)
+      verbose = .True.
+#  endif
   !==============================================================================!
   !   SETUP PARALLEL ENVIRONMENT                                                 !
   !==============================================================================!

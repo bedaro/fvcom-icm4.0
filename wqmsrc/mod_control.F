@@ -52,6 +52,7 @@ Module MOD_CONTROL
       Logical SERIAL !!TRUE IF SINGLE PROCESSOR
       Logical MSR !!TRUE IF MASTER PROCESSOR (MYID==1)
       Logical PAR !!TRUE IF MULTIPROCESSOR RUN
+      Logical :: verbose = .False. !!Tells setup subroutines to print messages
   !
       Character (Len=80) CASENAME !!LETTER ACRONYM SPECIFYING CASE IDENTITY (MAX 80 CHARS)
       Character (Len=120) CASETITLE !!CASE TITLE
