@@ -1870,10 +1870,9 @@ Program FVCOMICM
         & TOTAL_TIME, " seconds"
       End If
 
-      CALL PSTOP     !This does not stop the run properly
-!#if defined (MULTIPROCESSOR)
-!      Call MPI_FINALIZE (IERR)
-!#endif
+#if defined (MULTIPROCESSOR)
+      Call MPI_FINALIZE (IERR)
+#endif
 
 End Program FVCOMICM
 !
