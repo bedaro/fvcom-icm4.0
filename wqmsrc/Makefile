@@ -38,8 +38,8 @@
 #                           UNCOMMENT TO INCLUDE NETCDF OUTPUT CAPABILITY
 #--------------------------------------------------------------------------
            FLAG_2       =  -DNETCDF_IO
-           IOLIBS       =  -L../netcdf_install/lib -lnetcdf # /home/BIAN431/mypsdiag/netcdf_install/lib  -lnetcdf
-           IOINCS       =  -I../netcdf_install/include      # /home/BIAN431/mypsdiag/netcdf_install/include
+           IOLIBS       =  $(shell nf-config --flibs) # e.g., -L/opt/netcdf_install/lib -lnetcdf
+           IOINCS       =  $(shell nf-config --fflags) # e.g., -I/opt/netcdf_install/include
 
 #
 #Flag to turn on the various outputs for program checking
@@ -120,12 +120,18 @@
 #--------------------------------------------------------------------------
 #  gfortran defs
 #--------------------------------------------------------------------------
-#         CPP      = /usr/bin/cpp
-#         CPPFLAGS = $(DEF_FLAGS)  -DGFORTRAN
-#         FC       = gfortran -fallow-argument-mismatch -ffree-line-length-160
-#         DEBFLGS  =
-#         OPT      = -O3
-#         CLIB     =
+#CPP       = /usr/bin/cpp
+#DEF_FLAGS = -P -traditional
+#CPPFLAGS  = $(DEF_FLAGS)  -DGFORTRAN
+#DEBFLGS   =
+#OPT       = -O3
+#CLIB      =
+# Parallel w/ OpenMPI
+#FC        = mpif90 -ffree-line-length-160 -fallow-argument-mismatch
+#MPILIB    = $(shell pkg-config --libs ompi-fort)
+# Non-parallel build
+#FLAG_1    =
+#FC        = gfortran -fallow-argument-mismatch -ffree-line-length-160
 
 #--------------------------------------------------------------------------
 #  pFUnit configuration
