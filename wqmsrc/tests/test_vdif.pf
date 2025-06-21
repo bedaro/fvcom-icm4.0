@@ -1,0 +1,205 @@
+module test_vdif
+  use mod_prec, only: SP, DP
+  use funit
+  use mod_sizes, only: mgl, ngl
+  use mod_lims, only: kb, kbm1
+  implicit none
+
+contains
+    @before
+    subroutine set_up()
+      use mod_control, only: msr, serial, par
+      msr = .True.
+      par = .False.
+      serial = .True.
+    end subroutine set_up
+
+    @after 
+    subroutine cleanup()
+      use test_grid, only: cleanup_grid
+      use mod_wqm, only: wqm_dealloc
+
+      call wqm_dealloc
+      call cleanup_grid
+    end subroutine cleanup
+
+    subroutine zero_v_field()
+      use mod_hydrovars, only: d, h, dt, dtfa, dt1, kh
+
+      d = h
+      dt = d
+      dtfa = d ! surface heights were negligible in the solution
+      dt1 = d(1)
+
+      ! For diffusion we need to set kh
+      kh(:,1) = 0.08104421
+      kh(:,2) = (/ 0.02342862, 0.02418916, 0.02342035, &
+                   0.02389441, 0.02391123, 0.02330139, &
+                   0.02393731, 0.02326008, 0.02389442, &
+                   0.02391125, 0.02342864, 0.02418915, &
+                   0.0234203 /)
+      kh(:,3) = (/ 1.604977e-04, 1.158623e-02, 2.133687e-04, &
+                   6.079706e-03, 8.271581e-03, 6.303549e-05, &
+                   7.751519e-03, 1.121381e-04, 6.078308e-03, &
+                   8.272328e-03, 1.617047e-04, 1.158735e-02, &
+                   2.106366e-04 /)
+
+    end subroutine zero_v_field
+
+    ! Test mass conservation between C2 and C2F for given constituent
+    subroutine test_mass(cst)
+      use mod_wqm, only: wqm_alloc, c2, c2f
+      use mod_hydrovars, only: art1, dz, dtfa
+      implicit none
+      integer, intent(in) :: cst
+      real(dp) m1, m2
+      integer :: i, j
+      ! Add up total system mass before and after
+      m1 = 0.
+      m2 = 0.
+      do i = 1, mgl
+        do j = 1, kbm1
+          m1 = m1 + c2(i,j,cst) * art1(i) * dz(j) * dtfa(i)
+          m2 = m2 + c2f(i,j,cst) * art1(i) * dz(j) * dtfa(i)
+        end do
+      end do
+
+      ! mass conservation
+      @assertRelativelyEqual(m1, m2, message="Mass cons", tolerance=1e-4)
+    end subroutine test_mass
+
+    @test
+    subroutine test_bottom_vdif()
+      use test_grid, only: build_simple_grid
+      use mod_lims, only: numpnt
+      use mod_hydrovars, only: art1, dz, dtfa
+      use mod_wqm, only: wqm_alloc, c2, c2f, dlt, zdfbck, nac, ac, vdifflux
+      implicit none
+      integer :: i, j
+      real(dp) :: tmp
+
+      call build_simple_grid
+      call wqm_alloc
+
+      call zero_v_field
+
+      ! Define timestep and initial tracer concentration
+      ! in bottom cells
+      numpnt = 0
+      dlt = 3
+      nac = 1
+      ac(1) = 12
+      c2(:, 3, 12) = 1.
+      zdfbck = 0.001
+
+      call viscof_h
+
+      ! Diffuse once
+      c2f = c2
+      call vdif_wqm(c2f)
+      !print 10, "C2", ((c2(i,j,12), i=1, mgl), j=1, kbm1)
+      !print 10, "C2F", ((c2f(i,j,12), i=1, mgl), j=1, kbm1)
+      !print 10, "VDIFFLUX", ((VDIFFLUX(i,j,12), i=1, mgl), j=1, kbm1)
+
+      ! Tests after one diffusion
+      call test_mass(12)
+      ! tracer in middle cells
+      @assertTrue(c2f(4, 2, 12) > 0., message="Downstream dirty")
+      @assertRelativelyEqual(6.24e-4, c2f(4,2,12), message="Node 4 layer 2", tolerance=1e-4)
+      @assertTrue(c2f(6, 2, 12) > 0., message="Downstream dirty")
+      @assertRelativelyEqual(5.89e-4, c2f(6,2,12), message="Node 6 layer 2", tolerance=1e-4)
+      @assertTrue(c2f(9, 2, 12) > 0., message="Downstream dirty")
+      @assertRelativelyEqual(6.241e-4, c2f(9,2,12), message="Node 9 layer 2", tolerance=1e-4)
+      ! vertical diffusion tracking is accurate
+      ! unlike with advection, diffusion will affect more than just
+      ! adjacent cells so checks are more complicated:
+      !write (*,*) 'Mass change: ', (c2f(4,2,12) * dz(2) + c2f(4,1,12) * dz(1)) * art1(4) * dtfa(4), ' g'
+      !write (*,*) 'Mass flux:   ', (c2f(4,2,12) * dz(2) + c2f(4,1,12) * dz(1)) * dtfa(4) / dlt, ' g/m2/sec'
+      !write (*,*) 'VDIFFLUX:    ', vdifflux(4,3,12)
+      ! Does bottom VDIFFLUX match the total increase in
+      ! all layers above?
+      tmp = (c2f(4,2,12) * dz(2) + c2f(4,1,12) * dz(1)) * dtfa(4)
+      @assertRelativelyEqual(tmp, vdifflux(4,3,12), tolerance=1e-4, message='Flux node 4 bot')
+      tmp = (c2f(6,2,12) * dz(2) + c2f(6,1,12) * dz(1)) * dtfa(4)
+      @assertRelativelyEqual(tmp, vdifflux(6,3,12), tolerance=5e-4, message='Flux node 6 bot')
+      tmp = (c2f(9,2,12) * dz(2) + c2f(9,1,12) * dz(1)) * dtfa(4)
+      @assertRelativelyEqual(tmp, vdifflux(9,3,12), tolerance=1e-4, message='Flux node 9 bot')
+      ! Does middle VDIFFLUX match the increase in top layer? I think there
+      ! are numerical precision issues with getting these values right, so
+      ! the tolerances are super wide
+      @assertRelativelyEqual(c2f(4,1,12) * dz(1) * dtfa(4), vdifflux(4,2,12), tolerance=.1, message='Flux node 4 mid')
+      @assertRelativelyEqual(c2f(6,1,12) * dz(1) * dtfa(6), vdifflux(6,2,12), tolerance=.1, message='Flux node 6 mid')
+      @assertRelativelyEqual(c2f(9,1,12) * dz(1) * dtfa(9), vdifflux(9,2,12), tolerance=.1, message='Flux node 9 mid')
+
+10    format(a8, 6(e12.5))
+    end subroutine test_bottom_vdif
+
+    @test
+    subroutine test_bottom_vdif_multi()
+      use test_grid, only: build_simple_grid
+      use mod_lims, only: numpnt
+      use mod_hydrovars, only: art1, dz, dtfa
+      use mod_wqm, only: wqm_alloc, c2, c2f, dlt, zdfbck, nac, ac, vdifflux
+      implicit none
+      integer :: i, j
+      real(dp) :: tmp
+
+      call build_simple_grid
+      call wqm_alloc
+
+      call zero_v_field
+
+      ! Define timestep and initial tracer concentration
+      ! in bottom cells
+      numpnt = 0
+      dlt = 3
+      nac = 1
+      ac(1) = 12
+      c2(:, 3, 12) = 1.
+      zdfbck = 0.001
+
+      call viscof_h
+
+      ! Diffuse
+      c2f = c2
+      do i = 1, 10
+        call vdif_wqm(c2f)
+      end do
+      !print 10, "C2", ((c2(i,j,12), i=1, mgl), j=1, kbm1)
+      !print 10, "C2F", ((c2f(i,j,12), i=1, mgl), j=1, kbm1)
+      !print 10, "VDIFFLUX", ((VDIFFLUX(i,j,12), i=1, mgl), j=1, kbm1)
+
+      ! Tests after one diffusion
+      call test_mass(12)
+      ! tracer in middle cells
+      @assertTrue(c2f(4, 2, 12) > 0., message="Downstream dirty")
+      @assertRelativelyEqual(6.159e-3, c2f(4,2,12), message="Node 4 layer 2", tolerance=1e-4)
+      @assertTrue(c2f(6, 2, 12) > 0., message="Downstream dirty")
+      @assertRelativelyEqual(5.816e-3, c2f(6,2,12), message="Node 6 layer 2", tolerance=1e-4)
+      @assertTrue(c2f(9, 2, 12) > 0., message="Downstream dirty")
+      @assertRelativelyEqual(6.159e-3, c2f(9,2,12), message="Node 9 layer 2", tolerance=1e-4)
+      ! vertical diffusion tracking is accurate
+      ! unlike with advection, diffusion will affect more than just
+      ! adjacent cells so checks are more complicated:
+      !write (*,*) 'Mass change: ', (c2f(4,2,12) * dz(2) + c2f(4,1,12) * dz(1)) * art1(4) * dtfa(4), ' g'
+      !write (*,*) 'Mass flux:   ', (c2f(4,2,12) * dz(2) + c2f(4,1,12) * dz(1)) * dtfa(4) / dlt, ' g/m2/sec'
+      !write (*,*) 'VDIFFLUX:    ', vdifflux(4,3,12)
+      ! Does bottom VDIFFLUX match the total increase in
+      ! all layers above?
+      tmp = (c2f(4,2,12) * dz(2) + c2f(4,1,12) * dz(1)) * dtfa(4)
+      @assertRelativelyEqual(tmp, vdifflux(4,3,12), tolerance=1e-4, message='Flux node 4 bot')
+      tmp = (c2f(6,2,12) * dz(2) + c2f(6,1,12) * dz(1)) * dtfa(4)
+      @assertRelativelyEqual(tmp, vdifflux(6,3,12), tolerance=5e-4, message='Flux node 6 bot')
+      tmp = (c2f(9,2,12) * dz(2) + c2f(9,1,12) * dz(1)) * dtfa(4)
+      @assertRelativelyEqual(tmp, vdifflux(9,3,12), tolerance=1e-4, message='Flux node 9 bot')
+      ! Does middle VDIFFLUX match the increase in top layer? I think there
+      ! are numerical precision issues with getting these values right, so
+      ! the tolerances are super wide
+      @assertRelativelyEqual(c2f(4,1,12) * dz(1) * dtfa(4), vdifflux(4,2,12), tolerance=.1, message='Flux node 4 mid')
+      @assertRelativelyEqual(c2f(6,1,12) * dz(1) * dtfa(6), vdifflux(6,2,12), tolerance=.1, message='Flux node 6 mid')
+      @assertRelativelyEqual(c2f(9,1,12) * dz(1) * dtfa(9), vdifflux(9,2,12), tolerance=.1, message='Flux node 9 mid')
+
+10    format(a8, 6(e12.5))
+    end subroutine test_bottom_vdif_multi
+
+end module test_vdif

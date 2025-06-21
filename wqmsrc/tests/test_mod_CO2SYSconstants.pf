@@ -93,7 +93,7 @@ contains
     @assertEqual(size(a, 2), size(b, 2), message=msg // " array dim 2 mismatch")
     do i = 1, size(a, 1)
       do j = 1, size(a, 2)
-        ! assertRealivelyEqual can't handle zeros so check for them and use
+        ! assertRelativelyEqual can't handle zeros so check for them and use
         ! a special assert if found
         if(a(i, j) == 0 .or. b(i, j) == 0) then
           @assertEqual(a(i, j), b(i, j), tolerance=1e-5, message=msg)
@@ -114,41 +114,41 @@ contains
     character(len=8) :: lbl
     character(len=16) :: dbg
     character(len=*) :: fname
-    real(SP), dimension(0:mgl, kbm1) :: expect
+    real(SP), dimension(mgl, kbm1) :: expect
 
     open(902, file=fname)
     do v = 1, var_ct
-      read(902, *) lbl, expect(1:,:)
+      read(902, *) lbl, expect(:,:)
       write(dbg, '(a,i0,a,i0)') lbl // '_', which_K1K2, '_', whoseKSO4
       select case (lbl)
         case('TB')
-          call check_equal(expect, TB, dbg)
+          call check_equal(expect, TB(1:,:), dbg)
         case('TF')
-          call check_equal(expect, TF, dbg)
+          call check_equal(expect, TF(1:,:), dbg)
         case('TS')
-          call check_equal(expect, TS, dbg)
+          call check_equal(expect, TS(1:,:), dbg)
         case('IonS')
-          call check_equal(expect, IonS, dbg)
+          call check_equal(expect, IonS(1:,:), dbg)
         case('K0')
-          call check_equal(expect, K0, dbg)
+          call check_equal(expect, K0(1:,:), dbg)
         case('KS')
-          call check_equal(expect, KS, dbg)
+          call check_equal(expect, KS(1:,:), dbg)
         case('KF')
-          call check_equal(expect, KF, dbg)
+          call check_equal(expect, KF(1:,:), dbg)
         case('Kbb')
-          call check_equal(expect, Kbb, dbg)
+          call check_equal(expect, Kbb(1:,:), dbg)
         case('KW')
-          call check_equal(expect, KW, dbg)
+          call check_equal(expect, KW(1:,:), dbg)
         case('K1')
-          call check_equal(expect, K1, dbg)
+          call check_equal(expect, K1(1:,:), dbg)
         case('K2')
-          call check_equal(expect, K2, dbg)
+          call check_equal(expect, K2(1:,:), dbg)
         case('FugFac')
-          call check_equal(expect, FugFac, dbg)
+          call check_equal(expect, FugFac(1:,:), dbg)
         case('VPFac')
-          call check_equal(expect, VPFac, dbg)
+          call check_equal(expect, VPFac(1:,:), dbg)
         case('TALK')
-          call check_equal(expect, TALK, dbg)
+          call check_equal(expect, TALK(1:,:), dbg)
       end select
     end do
     close(902)

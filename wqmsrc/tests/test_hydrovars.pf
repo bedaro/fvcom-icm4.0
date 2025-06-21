@@ -1,0 +1,80 @@
+module test_hydrovars
+  use pfunit
+  implicit none
+
+  contains
+    @test
+    subroutine test_hydro_geom_alloc_dealloc()
+      use mod_hydrovars, only: hydro_geom_alloc, hydro_geom_dealloc, hg
+      use mod_sizes, only: mgl, ngl, nobty, ncp
+      use mod_lims, only: kb
+      implicit none
+
+      mgl = 9
+      ngl = 7
+      kb = 5
+      @assertFalse(allocated(hg))
+      call hydro_geom_alloc()
+      @assertTrue(allocated(hg))
+      hg(:) = 20.
+      call hydro_geom_dealloc()
+      @assertFalse(allocated(hg))
+    end subroutine test_hydro_geom_alloc_dealloc
+
+    @test
+    subroutine test_hydro_geom_dealloc()
+      use mod_hydrovars, only: hydro_geom_dealloc, hg
+      implicit none
+
+      @assertFalse(allocated(hg))
+      call hydro_geom_dealloc()
+      @assertFalse(allocated(hg))
+    end subroutine test_hydro_geom_dealloc
+
+    @test
+    subroutine test_hydro_alloc_dealloc()
+      use mod_hydrovars, only: hydro_alloc, hydro_dealloc, d
+      use mod_lims, only: mtloc, ntloc, kb, kbm1
+      use mod_sizes, only: mgl, ngl, nobty
+      implicit none
+
+      mgl = 12
+      mtloc = 12
+      ngl = 8
+      ntloc = 8
+      kb = 6
+      kbm1 = 5
+      nobty = 3
+
+      @assertFalse(allocated(d))
+      call hydro_alloc()
+      @assertTrue(allocated(d))
+      d(:) = 5.
+      call hydro_dealloc()
+      @assertFalse(allocated(d))
+    end subroutine test_hydro_alloc_dealloc
+
+    @test
+    subroutine test_hydro_alloc_bty0()
+      use mod_hydrovars, only: hydro_alloc, hydro_dealloc, d
+      use mod_lims, only: mtloc, ntloc, kb, kbm1
+      use mod_sizes, only: mgl, ngl, nobty
+      implicit none
+
+      mgl = 12
+      mtloc = 12
+      ngl = 8
+      ntloc = 8
+      kb = 6
+      kbm1 = 5
+      nobty = 0
+
+      @assertFalse(allocated(d))
+      call hydro_alloc()
+      @assertTrue(allocated(d))
+      d(:) = 5.
+      call hydro_dealloc()
+      @assertFalse(allocated(d))
+    end subroutine test_hydro_alloc_bty0
+
+end module test_hydrovars
